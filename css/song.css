@@ -11,8 +11,14 @@
   margin-bottom: var(--space-6);
 }
 
+/* Linha principal: identificação da música + painel de especificações. */
+.song-header__grid {
+  display: grid;
+  gap: var(--space-5);
+}
+
 @media (min-width: 900px) {
-  .song-header {
+  .song-header__grid {
     grid-template-columns: 1fr auto;
     align-items: end;
   }

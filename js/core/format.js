@@ -161,7 +161,7 @@ export function unique(items) {
 export function debounce(fn, delay = 250) {
   let timer = null;
   return (...args) => {
-    window.clearTimeout(timer);
-    timer = window.setTimeout(() => fn(...args), delay);
+    clearTimeout(timer);
+    timer = setTimeout(() => fn(...args), delay);
   };
 }

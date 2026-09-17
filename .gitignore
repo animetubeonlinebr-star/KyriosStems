@@ -1,0 +1,40 @@
+# Dependências e artefatos de build
+node_modules/
+dist/
+build/
+
+# Arquivos de ambiente e credenciais locais
+.env
+.env.*
+*.local
+
+# Configuração real do Firebase (nunca versionar credenciais de produção).
+# Mantenha js/firebase/config.js com valores de exemplo no repositório.
+js/firebase/config.local.js
+
+# Cache e temporários do agente
+.agents_tmp/
+.agent_tmp/
+
+# Sistema operacional e editores
+.DS_Store
+Thumbs.db
+*.swp
+*~
+
+# Áudio e pacotes de sessão NUNCA pertencem ao Git.
+# A biblioteca de mídia vive no Firebase Storage.
+*.wav
+*.aif
+*.aiff
+*.flac
+*.mp3
+*.zip
+*.rar
+*.7z
+*.rpp
+*.als
+*.cpr
+*.ptx
+*.flp
+*.bwproject

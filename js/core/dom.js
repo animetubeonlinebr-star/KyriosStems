@@ -54,9 +54,13 @@ export function clear(node) {
   return node;
 }
 
-/** @param {Element} node @param {Node|string} child */
+/** Substitui o conteúdo de um nó por um ou vários filhos. */
 export function mount(node, child) {
-  clear(node).append(child instanceof Node ? child : document.createTextNode(String(child)));
+  clear(node);
+  for (const item of [].concat(child)) {
+    if (item === null || item === undefined || item === false) continue;
+    node.append(item instanceof Node ? item : document.createTextNode(String(item)));
+  }
   return node;
 }
 
