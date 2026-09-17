@@ -1,27 +1,28 @@
 /* ==========================================================================
    KyriosStems - admin.css
-   Painel administrativo, login e formulários multi-etapa.
+   Login e painel administrativo.
    ========================================================================== */
 
 /* --------------------------------------------------------------------------
-   Login
+   Login — cartão de 400px, centralizado no desktop
    -------------------------------------------------------------------------- */
 
 .login-shell {
-  display: grid;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   min-height: 100vh;
-  place-items: center;
   padding: var(--space-5);
 }
 
 .login-card {
   width: 100%;
-  max-width: 400px;
-  padding: var(--space-6);
+  max-width: var(--login-max);
+  padding: var(--space-8) var(--space-6);
   background: var(--color-surface);
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
 }
 
 .login-card__brand {
@@ -29,23 +30,30 @@
   flex-direction: column;
   align-items: center;
   gap: var(--space-3);
-  margin-bottom: var(--space-6);
   text-align: center;
+  margin-bottom: var(--space-6);
+}
+
+.login-card__brand .brand__mark {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+}
+
+.login-card__brand .brand__mark svg {
+  width: 22px;
+  height: 22px;
 }
 
 .login-card__title {
-  font-family: var(--font-display);
   font-size: var(--text-2xl);
-  letter-spacing: var(--tracking-wider);
-  text-transform: uppercase;
+  font-weight: var(--weight-bold);
+  letter-spacing: -0.02em;
 }
 
 .login-card__subtitle {
-  font-family: var(--font-mono);
-  font-size: 0.625rem;
-  letter-spacing: var(--tracking-wider);
-  text-transform: uppercase;
-  color: var(--color-text-faint);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
 }
 
 .login-card__form {
@@ -55,60 +63,96 @@
 }
 
 .login-card__footer {
-  margin-top: var(--space-5);
+  margin-top: var(--space-6);
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--color-border);
   text-align: center;
-  font-size: var(--text-xs);
-  color: var(--color-text-faint);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.login-card__footer a:hover {
+  color: var(--color-primary);
 }
 
 /* --------------------------------------------------------------------------
-   Shell do admin
+   Painel: barra superior no celular, sidebar no desktop
    -------------------------------------------------------------------------- */
 
 .admin-shell {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   min-height: 100vh;
+  padding-bottom: var(--bottom-nav-height);
 }
 
 @media (min-width: 960px) {
   .admin-shell {
-    grid-template-columns: 232px 1fr;
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    padding-bottom: 0;
   }
 }
 
 .admin-sidebar {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
-  padding: var(--space-5) var(--space-4);
-  background: var(--color-bg-deep);
-  border-right: var(--border-width) solid var(--color-border);
+  gap: var(--space-1);
+  padding: var(--space-4);
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+
+@media (min-width: 960px) {
+  .admin-sidebar {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    border-bottom: none;
+    border-right: 1px solid var(--color-border);
+    overflow-y: auto;
+  }
 }
 
 .admin-sidebar__brand {
-  margin-bottom: var(--space-5);
+  margin-bottom: var(--space-4);
+}
+
+/* No celular a navegação do painel vive na barra inferior. */
+.admin-sidebar__nav {
+  display: none;
+}
+
+@media (min-width: 960px) {
+  .admin-sidebar__nav {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+  }
 }
 
 .admin-sidebar__section {
-  font-family: var(--font-mono);
-  font-size: 0.625rem;
-  letter-spacing: var(--tracking-wider);
-  text-transform: uppercase;
-  color: var(--color-text-faint);
+  padding-inline: var(--space-3);
   margin-top: var(--space-4);
   margin-bottom: var(--space-2);
-  padding-inline: var(--space-3);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
 }
 
 .admin-nav-item {
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  padding: var(--space-2) var(--space-3);
-  border-radius: var(--radius-sm);
+  min-height: var(--control-height);
+  padding-inline: var(--space-3);
+  border-radius: var(--radius);
   font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
   color: var(--color-text-muted);
-  transition: background var(--transition-fast), color var(--transition-fast);
+  transition: background var(--transition), color var(--transition);
 }
 
 .admin-nav-item:hover {
@@ -117,13 +161,13 @@
 }
 
 .admin-nav-item.is-active {
-  background: var(--color-accent-soft);
-  color: var(--color-accent);
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
 }
 
 .admin-nav-item svg {
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   flex-shrink: 0;
 }
 
@@ -139,30 +183,39 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
-  padding: var(--space-4) var(--space-5);
-  border-bottom: var(--border-width) solid var(--color-border);
-  background: rgba(14, 17, 22, 0.7);
+  padding: var(--space-4);
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+
+@media (min-width: 960px) {
+  .admin-topbar {
+    padding-inline: var(--space-6);
+  }
 }
 
 .admin-topbar__title {
-  font-family: var(--font-display);
   font-size: var(--text-xl);
-  letter-spacing: var(--tracking-wide);
-  text-transform: uppercase;
+  font-weight: var(--weight-semibold);
 }
 
 .admin-topbar__user {
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  font-family: var(--font-mono);
-  font-size: var(--text-xs);
+  font-size: var(--text-sm);
   color: var(--color-text-muted);
 }
 
 .admin-content {
   flex: 1;
-  padding: var(--space-5);
+  padding: var(--space-4);
+}
+
+@media (min-width: 960px) {
+  .admin-content {
+    padding: var(--space-6);
+  }
 }
 
 .admin-view {
@@ -174,16 +227,16 @@
 }
 
 /* --------------------------------------------------------------------------
-   Assistant (formulário de etapas)
+   Formulário em etapas
    -------------------------------------------------------------------------- */
 
 .wizard-steps {
   display: flex;
-  flex-wrap: wrap;
   gap: var(--space-2);
   margin-bottom: var(--space-5);
   list-style: none;
-  padding: 0;
+  overflow-x: auto;
+  padding-bottom: var(--space-1);
 }
 
 .wizard-step {
@@ -191,38 +244,40 @@
   align-items: center;
   gap: var(--space-2);
   padding: var(--space-2) var(--space-3);
-  border: var(--border-width) solid var(--color-border);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-pill);
-  font-family: var(--font-mono);
-  font-size: var(--text-xs);
-  color: var(--color-text-faint);
   background: var(--color-surface);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  color: var(--color-text-muted);
   white-space: nowrap;
 }
 
 .wizard-step__index {
   display: grid;
   place-items: center;
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
-  background: var(--color-bg-deep);
-  font-size: 0.625rem;
+  background: var(--color-surface-hover);
+  font-size: 0.6875rem;
 }
 
 .wizard-step.is-active {
-  border-color: var(--color-accent-line);
-  color: var(--color-accent);
+  border-color: var(--color-primary-border);
+  background: var(--color-primary-soft);
+  color: var(--color-primary-strong);
 }
 
 .wizard-step.is-active .wizard-step__index {
-  background: var(--color-accent);
-  color: var(--color-accent-ink);
+  background: var(--color-primary);
+  color: var(--color-text-inverse);
 }
 
 .wizard-step.is-done {
-  color: var(--color-success);
-  border-color: rgba(94, 201, 138, 0.35);
+  border-color: var(--color-success-border);
+  background: var(--color-success-soft);
+  color: #065f46;
 }
 
 .wizard-panel {
@@ -235,19 +290,26 @@
 
 .wizard-nav {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column-reverse;
   gap: var(--space-3);
-  margin-top: var(--space-5);
+  margin-top: var(--space-6);
   padding-top: var(--space-5);
-  border-top: var(--border-width) solid var(--color-border);
+  border-top: 1px solid var(--color-border);
+}
+
+@media (min-width: 560px) {
+  .wizard-nav {
+    flex-direction: row;
+    justify-content: space-between;
+  }
 }
 
 .wizard-summary {
   display: grid;
   gap: var(--space-3);
   padding: var(--space-5);
-  background: var(--color-bg-deep);
-  border-radius: var(--radius-sm);
+  background: var(--color-surface-muted);
+  border-radius: var(--radius);
 }
 
 .wizard-summary__row {
@@ -255,8 +317,8 @@
   justify-content: space-between;
   gap: var(--space-4);
   font-size: var(--text-sm);
-  border-bottom: var(--border-width) solid var(--color-border);
   padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .wizard-summary__row:last-child {
@@ -265,19 +327,16 @@
 }
 
 .wizard-summary__key {
-  font-family: var(--font-mono);
-  font-size: var(--text-xs);
-  text-transform: uppercase;
-  letter-spacing: var(--tracking-wide);
-  color: var(--color-text-faint);
+  color: var(--color-text-muted);
 }
 
 .wizard-summary__value {
+  font-weight: var(--weight-medium);
   text-align: right;
 }
 
 /* --------------------------------------------------------------------------
-   Painel de upload
+   Upload
    -------------------------------------------------------------------------- */
 
 .upload-file-list {
@@ -286,7 +345,6 @@
   gap: var(--space-2);
   margin-top: var(--space-4);
   list-style: none;
-  padding: 0;
 }
 
 .upload-file {
@@ -294,29 +352,29 @@
   align-items: center;
   gap: var(--space-3);
   padding: var(--space-2) var(--space-3);
-  background: var(--color-surface-raised);
+  background: var(--color-surface-muted);
   border-radius: var(--radius-sm);
   font-size: var(--text-xs);
 }
 
 .upload-file__name {
-  font-family: var(--font-mono);
   flex: 1;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-family: var(--font-mono);
 }
 
 .upload-file__size {
   font-family: var(--font-mono);
-  color: var(--color-text-faint);
+  color: var(--color-text-muted);
   white-space: nowrap;
 }
 
 .upload-file__status {
-  width: 14px;
-  height: 14px;
+  width: 16px;
+  height: 16px;
   flex-shrink: 0;
   color: var(--color-text-faint);
 }
@@ -326,7 +384,7 @@
 }
 
 .upload-file.is-error .upload-file__status {
-  color: var(--color-danger);
+  color: var(--color-error);
 }
 
 /* --------------------------------------------------------------------------
@@ -336,8 +394,9 @@
 .form-block {
   padding: var(--space-5);
   background: var(--color-surface);
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
 }
 
 .form-block + .form-block {
@@ -350,9 +409,16 @@
 
 .form-actions {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: var(--space-3);
   margin-top: var(--space-5);
+}
+
+@media (min-width: 560px) {
+  .form-actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
 }
 
 /* --------------------------------------------------------------------------
@@ -362,18 +428,18 @@
 .tag-editor {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-2);
-  padding: var(--space-2);
-  background: var(--color-bg-deep);
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius-sm);
-  min-height: 44px;
   align-items: center;
+  gap: var(--space-2);
+  min-height: var(--control-height);
+  padding: var(--space-2);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius);
 }
 
 .tag-editor:focus-within {
-  border-color: var(--color-accent-line);
-  box-shadow: 0 0 0 3px var(--color-accent-soft);
+  border-color: var(--color-primary);
+  box-shadow: var(--focus-ring);
 }
 
 .tag-editor__tag {
@@ -381,60 +447,57 @@
   align-items: center;
   gap: var(--space-1);
   padding: 2px var(--space-2);
-  background: var(--color-surface-raised);
+  background: var(--color-primary-soft);
+  border: 1px solid var(--color-primary-border);
   border-radius: var(--radius-sm);
-  font-family: var(--font-mono);
   font-size: var(--text-xs);
+  color: var(--color-primary-strong);
 }
 
 .tag-editor__remove {
   display: grid;
   place-items: center;
-  width: 14px;
-  height: 14px;
-  color: var(--color-text-faint);
+  width: 16px;
+  height: 16px;
+  color: var(--color-primary-strong);
 }
 
 .tag-editor__remove:hover {
-  color: var(--color-danger);
+  color: var(--color-error);
 }
 
 .tag-editor__remove svg {
-  width: 10px;
-  height: 10px;
+  width: 12px;
+  height: 12px;
 }
 
 .tag-editor__input {
   flex: 1;
   min-width: 120px;
-  background: none;
   border: none;
   outline: none;
-  font-size: var(--text-sm);
+  background: none;
 }
 
 /* --------------------------------------------------------------------------
-   Barra de status do admin
+   Barra de status
    -------------------------------------------------------------------------- */
 
 .admin-statusbar {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-4);
-  padding: var(--space-2) var(--space-5);
-  border-top: var(--border-width) solid var(--color-border);
-  background: var(--color-bg-deep);
-  font-family: var(--font-mono);
-  font-size: 0.625rem;
-  letter-spacing: var(--tracking-wide);
-  text-transform: uppercase;
-  color: var(--color-text-faint);
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-surface);
+  border-top: 1px solid var(--color-border);
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
 }
 
 .admin-statusbar__dot {
   display: inline-block;
-  width: 6px;
-  height: 6px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
   background: var(--color-text-faint);
   margin-right: var(--space-2);
@@ -445,5 +508,5 @@
 }
 
 .admin-statusbar__dot--off {
-  background: var(--color-danger);
+  background: var(--color-error);
 }

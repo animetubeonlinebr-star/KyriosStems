@@ -1,101 +1,116 @@
 /* ==========================================================================
    KyriosStems - variables.css
-   Identidade visual: estúdio de gravação à noite.
-   Fundo grafite, tinta clara, acento âmbar (LED de VU meter) e ciano (waveform).
+   Design system: limpo, moderno e funcional.
+
+   Cores frias e neutras para transmitir estabilidade; o índigo fica reservado
+   às ações principais. O fundo nunca é branco puro: o branco fica nos cartões,
+   que se destacam do cinza por uma sombra suave.
    ========================================================================== */
 
 :root {
-  /* --- Cores de superfície ------------------------------------------------ */
-  --color-bg: #0e1116;
-  --color-bg-deep: #080a0e;
-  --color-surface: #151a22;
-  --color-surface-raised: #1b212c;
-  --color-surface-hover: #222a37;
-  --color-border: #262e3b;
-  --color-border-strong: #354052;
+  /* --- Marca e ações ------------------------------------------------------ */
+  --color-primary: #4f46e5;
+  --color-primary-hover: #4338ca;
+  --color-primary-soft: #eef2ff;
+  --color-primary-border: #c7d2fe;
+  --color-primary-strong: #3730a3;
+
+  /* --- Superfícies -------------------------------------------------------- */
+  --color-bg: #f3f4f6;
+  --color-surface: #ffffff;
+  --color-surface-muted: #f9fafb;
+  --color-surface-hover: #f3f4f6;
+  --color-border: #e5e7eb;
+  --color-border-strong: #d1d5db;
 
   /* --- Texto -------------------------------------------------------------- */
-  --color-text: #e8ecf2;
-  --color-text-muted: #9aa5b4;
-  --color-text-faint: #6b7686;
-  --color-text-inverse: #0e1116;
+  --color-text: #1f2937;
+  --color-text-muted: #6b7280;
+  --color-text-faint: #9ca3af;
+  --color-text-inverse: #ffffff;
 
-  /* --- Acento principal (âmbar de VU meter) ------------------------------- */
-  --color-accent: #f2a33c;
-  --color-accent-hover: #ffb757;
-  --color-accent-ink: #1a1206;
-  --color-accent-soft: rgba(242, 163, 60, 0.12);
-  --color-accent-line: rgba(242, 163, 60, 0.35);
+  /* --- Feedback ----------------------------------------------------------- */
+  --color-error: #ef4444;
+  --color-error-soft: #fef2f2;
+  --color-error-border: #fecaca;
 
-  /* --- Acento secundário (waveform) --------------------------------------- */
-  --color-signal: #4fd1c5;
-  --color-signal-soft: rgba(79, 209, 197, 0.12);
+  --color-success: #10b981;
+  --color-success-soft: #ecfdf5;
+  --color-success-border: #a7f3d0;
 
-  /* --- Estados ------------------------------------------------------------ */
-  --color-danger: #f06a6a;
-  --color-danger-soft: rgba(240, 106, 106, 0.12);
-  --color-success: #5ec98a;
-  --color-success-soft: rgba(94, 201, 138, 0.12);
-  --color-warning: #e8c547;
-  --color-info: #6aa9f0;
+  --color-warning: #f59e0b;
+  --color-warning-soft: #fffbeb;
+  --color-warning-border: #fde68a;
+
+  --color-info: #3b82f6;
+  --color-info-soft: #eff6ff;
+  --color-info-border: #bfdbfe;
 
   /* --- Tipografia --------------------------------------------------------- */
-  --font-display: "Bebas Neue", "Oswald", "Arial Narrow", system-ui, sans-serif;
-  --font-body: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+  --font-ui: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
     "Helvetica Neue", Arial, sans-serif;
-  --font-mono: "JetBrains Mono", "SFMono-Regular", Consolas, "Liberation Mono",
-    Menlo, monospace;
+  /* Reservado a valores técnicos: nomes de arquivo, taxas, versões. */
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
+    "Liberation Mono", monospace;
 
-  --text-xs: 0.75rem;
-  --text-sm: 0.875rem;
-  --text-base: 1rem;
-  --text-lg: 1.125rem;
-  --text-xl: 1.375rem;
-  --text-2xl: 1.75rem;
-  --text-3xl: 2.25rem;
-  --text-4xl: 3rem;
+  --text-xs: 0.75rem;      /* 12px */
+  --text-sm: 0.875rem;     /* 14px */
+  --text-base: 1rem;       /* 16px */
+  --text-lg: 1.125rem;     /* 18px */
+  --text-xl: 1.25rem;      /* 20px */
+  --text-2xl: 1.5rem;      /* 24px */
+  --text-3xl: 1.875rem;    /* 30px */
+  --text-4xl: 2.25rem;     /* 36px */
 
   --weight-regular: 400;
   --weight-medium: 500;
+  --weight-semibold: 600;
   --weight-bold: 700;
 
-  --tracking-wide: 0.08em;
-  --tracking-wider: 0.16em;
+  --leading-tight: 1.25;
+  --leading-normal: 1.55;
 
-  /* --- Espaçamento -------------------------------------------------------- */
+  /* --- Espaçamento (escala de 4px) ---------------------------------------- */
   --space-1: 0.25rem;
   --space-2: 0.5rem;
   --space-3: 0.75rem;
   --space-4: 1rem;
-  --space-5: 1.5rem;
-  --space-6: 2rem;
-  --space-7: 3rem;
-  --space-8: 4rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
 
-  /* --- Layout ------------------------------------------------------------- */
-  --container-max: 1200px;
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-lg: 14px;
+  /* --- Raio: levemente arredondado ---------------------------------------- */
+  --radius-sm: 6px;
+  --radius: 8px;
+  --radius-md: 10px;
+  --radius-lg: 12px;
   --radius-pill: 999px;
 
-  --border-width: 1px;
+  /* --- Sombras: suaves, só para dar profundidade -------------------------- */
+  --shadow-xs: 0 1px 2px rgba(17, 24, 39, 0.04);
+  --shadow-sm: 0 1px 3px rgba(17, 24, 39, 0.06), 0 1px 2px rgba(17, 24, 39, 0.04);
+  --shadow-md: 0 4px 6px -1px rgba(17, 24, 39, 0.07),
+    0 2px 4px -2px rgba(17, 24, 39, 0.05);
+  --shadow-lg: 0 10px 20px -5px rgba(17, 24, 39, 0.1),
+    0 4px 8px -4px rgba(17, 24, 39, 0.05);
 
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
-  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.45);
-  --shadow-lg: 0 20px 50px rgba(0, 0, 0, 0.55);
+  /* --- Toque: alvo mínimo recomendado no celular -------------------------- */
+  --control-height: 44px;
+  --control-height-lg: 48px;
 
-  --transition-fast: 120ms ease;
-  --transition-base: 200ms ease;
+  /* --- Layout ------------------------------------------------------------- */
+  --container-max: 1120px;
+  --login-max: 400px;
+  --header-height: 60px;
+  --bottom-nav-height: 64px;
+
+  --focus-ring: 0 0 0 3px rgba(79, 70, 229, 0.18);
+  --transition: 150ms ease;
 
   --z-header: 100;
-  --z-dropdown: 200;
+  --z-bottom-nav: 100;
   --z-modal: 300;
   --z-toast: 400;
-}
-
-/* Grade de estúdio usada como textura de fundo discreta. */
-:root {
-  --grid-line: rgba(255, 255, 255, 0.022);
-  --grid-size: 32px;
 }

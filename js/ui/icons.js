@@ -23,6 +23,8 @@ const PATHS = {
   grid: '<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>',
   list: '<path d="M4 6h16M4 12h16M4 18h16"/>',
   dashboard: '<rect x="3" y="3" width="8" height="10"/><rect x="13" y="3" width="8" height="6"/><rect x="13" y="11" width="8" height="10"/><rect x="3" y="15" width="8" height="6"/>',
+  /* Biblioteca: estante com faixas, remetendo ao catálogo de músicas. */
+  library: '<path d="M4 4h6v16H4zM14 4h6v16h-6z"/><path d="M4 9h6M14 9h6"/>',
   disk: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.5"/>',
   refresh: '<path d="M20 11a8 8 0 10-2 6"/><path d="M20 4v7h-7"/>',
   external: '<path d="M14 4h6v6M20 4l-9 9M18 14v6H4V6h6"/>',

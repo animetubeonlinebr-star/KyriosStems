@@ -36,6 +36,12 @@ ol[role="list"] {
   padding: 0;
 }
 
+ul,
+ol {
+  margin: 0;
+  padding: 0;
+}
+
 img,
 picture,
 svg,
@@ -70,6 +76,13 @@ table {
 
 [hidden] {
   display: none !important;
+}
+
+/* O iOS aplica zoom automático em campos com fonte menor que 16px. */
+input,
+select,
+textarea {
+  font-size: 16px;
 }
 
 @media (prefers-reduced-motion: reduce) {
