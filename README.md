@@ -84,8 +84,10 @@ apenas quando configurado.
 kyrios-stems/
 ├── index.html              Catálogo (biblioteca)
 ├── song.html               Página da música
+├── login.html              Acesso administrativo
+├── admin.html              Painel administrativo
 ├── css/
-│   ├── variables.css       Identidade visual (tokens)
+│   ├── variables.css       Design system (tokens)
 │   ├── reset.css
 │   ├── global.css
 │   ├── components.css
@@ -93,12 +95,12 @@ kyrios-stems/
 │   ├── song.css
 │   └── admin.css
 ├── js/
-│   ├── core/               Constantes, DOM e formatação
-│   ├── firebase/           Configuração e inicialização do SDK
+│   ├── core/               Constantes, DOM, formatação e async
+│   ├── firebase/           Configuração, inicialização e autenticação
 │   ├── models/             Song e DawSession
 │   ├── repositories/       Acesso a Firestore e Storage
-│   ├── services/           Regras da biblioteca e download
-│   ├── components/         Cartões, busca, filtros, cabeçalho
+│   ├── services/           Biblioteca, download e publicação
+│   ├── components/         Cartões, busca, filtros, navegação
 │   ├── pages/              Controladores das páginas
 │   ├── ui/                 Ícones, toasts, modais
 │   └── data/               Biblioteca de demonstração
@@ -240,11 +242,12 @@ Os arquivos de áudio e os pacotes de sessão **não são armazenados no reposit
 
 - [x] Catálogo: lista, busca, filtros e página da música
 - [x] Modelos de dados e camada de acesso
-- [ ] Firebase: Authentication, Firestore e Storage
-- [ ] Administração: cadastro de músicas e sessões
-- [ ] Upload de pacote ZIP
-- [ ] Download do pacote completo
+- [x] Firebase: configuração e Authentication
+- [x] Administração: visão geral, biblioteca e cadastro em 5 etapas
+- [x] Upload de pacote e arquivos individuais
+- [x] Download do pacote completo
 - [ ] Security Rules
+- [ ] Publicação no GitHub Pages
 
 ### Futuro
 

@@ -10,12 +10,29 @@
  */
 
 import { initFirebase } from '../firebase/app.js';
-import { EXTENSION_CATEGORY, STORAGE_FOLDERS } from '../core/constants.js';
+import {
+  EXTENSION_CATEGORY,
+  STORAGE_FOLDERS,
+  PACKAGE_FILE_NAME,
+} from '../core/constants.js';
 import { fileExtension, sanitizeFileName } from '../core/format.js';
 
 /** Deriva a categoria de um arquivo a partir da extensão. */
 export function categorize(fileName) {
   return EXTENSION_CATEGORY[fileExtension(fileName)] || STORAGE_FOLDERS.aux;
+}
+
+/**
+ * Caminho de um arquivo no Storage. Fonte única da estrutura de pastas:
+ *   sessions/{songId}/{sessionId}/{categoria}/{arquivo}
+ */
+export function sessionPath(songId, sessionId, category, fileName) {
+  return `sessions/${songId}/${sessionId}/${category}/${fileName}`;
+}
+
+/** Caminho do pacote principal de uma sessão. */
+export function packagePath(songId, sessionId) {
+  return sessionPath(songId, sessionId, STORAGE_FOLDERS.package, PACKAGE_FILE_NAME);
 }
 
 /**
@@ -25,13 +42,14 @@ export function categorize(fileName) {
  * @param {string} params.sessionId
  * @param {string} params.category
  * @param {File|Blob} params.file
+ * @param {string} [params.fileName] Nome de destino, quando difere do original
  * @param {(percent: number) => void} [params.onProgress]
  */
-export async function uploadFile({ songId, sessionId, category, file, onProgress }) {
+export async function uploadFile({ songId, sessionId, category, file, fileName, onProgress }) {
   const { storage, sdk } = await initFirebase();
 
-  const name = sanitizeFileName(file.name || 'arquivo');
-  const path = `sessions/${songId}/${sessionId}/${category}/${name}`;
+  const name = sanitizeFileName(fileName || file.name || 'arquivo');
+  const path = sessionPath(songId, sessionId, category, name);
   const ref = sdk.storageModule.ref(storage, path);
 
   const task = sdk.storageModule.uploadBytesResumable(ref, file, {
@@ -65,29 +83,41 @@ export async function uploadFile({ songId, sessionId, category, file, onProgress
 /**
  * Envia vários arquivos sequencialmente, reportando progresso agregado.
  * Sequencial evita saturar a conexão e mantém a barra de progresso legível.
+ *
+ * @param {object} params
+ * @param {Array<{file: File, category: string, path?: string}>} params.entries
  */
-export async function uploadFiles({ songId, sessionId, files, onProgress, onFileStatus }) {
+export async function uploadFiles({ songId, sessionId, entries, onProgress, onFileStatus }) {
   const results = [];
-  const total = files.length;
+  const total = entries.length;
 
   for (let index = 0; index < total; index += 1) {
-    const file = files[index];
-    const category = categorize(file.name);
+    const entry = entries[index];
+    const file = entry.file;
 
     try {
       const uploaded = await uploadFile({
         songId,
         sessionId,
-        category,
+        category: entry.category,
         file,
+        fileName: entry.fileName,
         onProgress: (percent) => {
           if (!onProgress) return;
-          const overall = ((index + percent / 100) / total) * 100;
-          onProgress(Math.round(overall), file.name);
+          onProgress(Math.round(((index + percent / 100) / total) * 100), file.name);
         },
       });
-      results.push(uploaded);
-      onFileStatus?.(file.name, 'uploaded', uploaded);
+
+      // `storagePath` é o caminho real no Storage; `path` é o caminho relativo
+      // dentro do pacote, que é o que o usuário reconhece na página da música.
+      const record = {
+        ...uploaded,
+        storagePath: uploaded.path,
+        path: entry.relativePath || uploaded.name,
+      };
+      results.push(record);
+
+      onFileStatus?.(file.name, 'uploaded', record);
     } catch (error) {
       onFileStatus?.(file.name, 'error', error);
       throw error;

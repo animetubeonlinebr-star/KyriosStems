@@ -182,3 +182,9 @@ export const NETWORK = {
   /** Autenticação e verificação de sessão. */
   authTimeoutMs: 8000,
 };
+
+/**
+ * Cota de armazenamento do plano gratuito do Firebase Storage, usada apenas
+ * como referência visual no painel. O valor real é cobrado por uso.
+ */
+export const STORAGE_QUOTA_BYTES = 5 * 1024 * 1024 * 1024;
