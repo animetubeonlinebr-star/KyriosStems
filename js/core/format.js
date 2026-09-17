@@ -3,24 +3,6 @@
  * Formatação de valores e utilidades de apresentação.
  */
 
-/** Escapa texto para interpolação segura em HTML. */
-export function escapeHtml(value) {
-  return String(value ?? '').replace(/[&<>"']/g, (char) => {
-    switch (char) {
-      case '&':
-        return '&amp;';
-      case '<':
-        return '&lt;';
-      case '>':
-        return '&gt;';
-      case '"':
-        return '&quot;';
-      default:
-        return '&#39;';
-    }
-  });
-}
-
 /** Formata bytes em unidade legível. */
 export function formatBytes(bytes) {
   const value = Number(bytes);
@@ -110,15 +92,6 @@ export function normalizeText(value) {
 export function createId(prefix = 'id') {
   const random = Math.random().toString(36).slice(2, 8);
   return `${prefix}_${Date.now().toString(36)}${random}`;
-}
-
-/** Gera um slug a partir de texto livre. */
-export function slugify(value) {
-  const slug = normalizeText(value)
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 60);
-  return slug || 'sem-titulo';
 }
 
 /** Retorna a extensão em minúsculas, incluindo o ponto. */

@@ -5,11 +5,15 @@
 
 import { $, clear, el, mount, ready, setText } from '../core/dom.js';
 import { ROUTES } from '../core/constants.js';
-import { compareText, formatBytes, groupBy } from '../core/format.js';
-import { searchIndex } from '../models/song.js';
-import { loadLibrary } from '../services/library-service.js';
+import { compareText, groupBy } from '../core/format.js';
+import { loadLibrary, searchSongs } from '../services/library-service.js';
 import { createSearch } from '../components/search.js';
-import { createFilters, applyFilters, emptyFilters, hasActiveFilters } from '../components/filters.js';
+import {
+  createFilters,
+  applyFilters,
+  emptyFilters,
+  hasActiveFilters,
+} from '../components/filters.js';
 import { songCard } from '../components/song-card.js';
 import { mountChrome } from '../components/app-header.js';
 import { icon } from '../ui/icons.js';
@@ -29,14 +33,10 @@ async function init() {
   buildHero();
   renderLoading();
 
-  try {
-    state.library = await loadLibrary();
-  } catch (error) {
-    renderError(error);
-    return;
-  }
+  state.library = await loadLibrary();
 
   buildToolbar();
+  renderNotices();
   renderResults();
   renderHeroStats();
 }
@@ -52,9 +52,7 @@ function buildHero() {
   const wave = el(
     'div',
     { class: 'catalog-hero__wave', 'aria-hidden': 'true' },
-    Array.from({ length: 42 }, (_, index) =>
-      el('span', { style: `height:${waveHeight(index)}%` }),
-    ),
+    Array.from({ length: 42 }, (_, index) => el('span', { style: `height:${waveHeight(index)}%` })),
   );
 
   mountPoint.append(
@@ -72,7 +70,7 @@ function buildHero() {
         }),
         wave,
       ]),
-      el('div', { class: 'catalog-hero__stats', 'data-hero-stats': true }, [
+      el('div', { class: 'catalog-hero__stats' }, [
         heroStat('songs', 'Músicas'),
         heroStat('sessions', 'Sessões'),
         heroStat('daws', 'DAWs'),
@@ -89,15 +87,64 @@ function heroStat(key, label) {
 }
 
 function renderHeroStats() {
-  const facts = state.library.facets;
-  setText($('[data-stat="songs"]'), String(state.library.songs.length).padStart(2, '0'));
-  setText($('[data-stat="sessions"]'), String(facts.sessionCount).padStart(2, '0'));
-  setText($('[data-stat="daws"]'), String(facts.daws.length).padStart(2, '0'));
+  const { facets, songs } = state.library;
+  setText($('[data-stat="songs"]'), String(songs.length).padStart(2, '0'));
+  setText($('[data-stat="sessions"]'), String(facets.sessionCount).padStart(2, '0'));
+  setText($('[data-stat="daws"]'), String(facets.daws.length).padStart(2, '0'));
 }
 
 function waveHeight(index) {
   const value = Math.abs(Math.sin(index * 1.7) * 0.6 + Math.cos(index * 0.9) * 0.4);
   return Math.round(18 + value * 82);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Avisos                                                                     */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Avisa quando os dados exibidos não vêm do Firestore.
+ *
+ * O repositório degrada para a biblioteca de demonstração quando a leitura
+ * falha. Sem este aviso o usuário acreditaria estar vendo a biblioteca real.
+ */
+function renderNotices() {
+  const mountPoint = $('[data-notices]');
+  if (!mountPoint) return;
+
+  const { isDemo, error } = state.library;
+  clear(mountPoint);
+
+  if (!isDemo) return;
+
+  if (error) {
+    mountPoint.append(
+      el('div', { class: 'alert alert--error', role: 'alert' }, [
+        icon('alert', { size: 16 }),
+        el('div', {}, [
+          el('strong', { text: 'Não foi possível ler a biblioteca. ' }),
+          el('span', { text: error }),
+          el('p', { class: 'field__hint mt-4' }, [
+            'Exibindo dados de demonstração até que a leitura volte a funcionar.',
+          ]),
+        ]),
+      ]),
+    );
+    notifyError('Falha ao ler a biblioteca. Exibindo dados de demonstração.');
+    return;
+  }
+
+  mountPoint.append(
+    el('div', { class: 'setup-note' }, [
+      el('strong', { text: 'Modo demonstração. ' }),
+      el('span', {
+        text: 'O Firebase ainda não está configurado, então o catálogo abaixo usa uma biblioteca de exemplo. ',
+      }),
+      el('span', { text: 'Preencha ' }),
+      el('code', { text: 'js/firebase/config.js' }),
+      el('span', { text: ' para conectar a sua biblioteca real.' }),
+    ]),
+  );
 }
 
 /* -------------------------------------------------------------------------- */
@@ -130,34 +177,36 @@ function buildToolbar() {
     },
   });
 
-  const viewSwitch = el('div', { class: 'view-switch', role: 'group', 'aria-label': 'Modo de exibição' }, [
-    viewButton('grid', 'Grade', 'grid'),
-    viewButton('artist', 'Por intérprete', 'list'),
-  ]);
+  const viewSwitch = el(
+    'div',
+    { class: 'view-switch', role: 'group', 'aria-label': 'Modo de exibição' },
+    [viewButton('grid', 'Grade', 'grid'), viewButton('artist', 'Por intérprete', 'list')],
+  );
 
-  toolbar.append(el('div', { class: 'catalog-toolbar' }, [search.element, viewSwitch, spacer()]));
+  toolbar.append(
+    el('div', { class: 'catalog-toolbar' }, [search.element, viewSwitch, el('span')]),
+  );
   toolbar.append(filters.element);
 
   function viewButton(view, label, iconName) {
-    const button = el('button', {
-      type: 'button',
-      class: 'view-switch__btn',
-      'aria-pressed': String(state.view === view),
-      onClick: () => {
-        state.view = view;
-        for (const node of viewSwitch.querySelectorAll('.view-switch__btn')) {
-          node.setAttribute('aria-pressed', String(node === button));
-        }
-        renderResults();
+    const button = el(
+      'button',
+      {
+        type: 'button',
+        class: 'view-switch__btn',
+        'aria-pressed': String(state.view === view),
+        onClick: () => {
+          state.view = view;
+          for (const node of viewSwitch.querySelectorAll('.view-switch__btn')) {
+            node.setAttribute('aria-pressed', String(node === button));
+          }
+          renderResults();
+        },
       },
-    }, [icon(iconName, { size: 12 }), label]);
+      [icon(iconName, { size: 12 }), label],
+    );
     return button;
   }
-}
-
-/** Espaçador para manter o grid do toolbar alinhado. */
-function spacer() {
-  return el('span', { class: 'catalog-toolbar__spacer' });
 }
 
 /* -------------------------------------------------------------------------- */
@@ -168,7 +217,7 @@ function renderResults() {
   const results = $('[data-results]');
   if (!results) return;
 
-  const searched = filterByTerm(state.library.songs, state.term);
+  const searched = searchSongs(state.library.songs, state.term);
   const filtered = applyFilters(searched, state.library.sessions, state.filters);
 
   renderResultsBar(filtered.length, searched.length);
@@ -181,18 +230,14 @@ function renderResults() {
   if (state.view === 'artist') {
     renderByArtist(results, filtered);
   } else {
-    renderGrid(results, filtered);
+    clear(results).append(
+      el(
+        'div',
+        { class: 'song-grid' },
+        filtered.map(({ song, sessions }) => songCard(song, { sessions })),
+      ),
+    );
   }
-}
-
-function renderGrid(container, entries) {
-  clear(container).append(
-    el(
-      'div',
-      { class: 'song-grid' },
-      entries.map(({ song, sessions }) => songCard(song, { sessions })),
-    ),
-  );
 }
 
 function renderByArtist(container, entries) {
@@ -217,7 +262,7 @@ function renderByArtist(container, entries) {
   }
 }
 
-function renderResultsBar(shown, searchedTotal) {
+function renderResultsBar(shown, afterSearch) {
   const bar = $('[data-results-bar]');
   if (!bar) return;
 
@@ -231,64 +276,57 @@ function renderResultsBar(shown, searchedTotal) {
     el('span', { text: parts.join(' • ') }),
     el('span', {
       class: 'mono',
-      text: searchedTotal === total ? '' : `${searchedTotal} correspondência(s)`,
+      text: afterSearch === total ? '' : `${afterSearch} correspondência(s)`,
     }),
   ]);
 }
 
-function filterByTerm(songs, term) {
-  const needle = String(term ?? '').trim();
-  if (!needle) return songs;
-  const normalized = searchIndex({ title: needle });
-  return songs.filter((song) => searchIndex(song).includes(normalized));
-}
-
 function emptyState() {
-  const nothing = state.library.songs.length === 0;
+  const empty = state.library.songs.length === 0;
+
+  if (empty) {
+    return el('div', { class: 'empty-state' }, [
+      icon('music', { size: 32, class: 'text-faint' }),
+      el('h2', { class: 'empty-state__title', text: 'Biblioteca vazia' }),
+      el('p', {
+        class: 'empty-state__text',
+        text: 'Ainda não há músicas cadastradas. Entre no painel administrativo para cadastrar a primeira sessão.',
+      }),
+      el('a', { class: 'btn btn--secondary', href: ROUTES.login }, ['Acessar o painel']),
+    ]);
+  }
+
   return el('div', { class: 'empty-state' }, [
-    icon('music', { size: 32, class: 'text-faint' }),
-    el('h2', { class: 'empty-state__title', text: nothing ? 'Biblioteca vazia' : 'Nenhum resultado' }),
+    icon('search', { size: 32, class: 'text-faint' }),
+    el('h2', { class: 'empty-state__title', text: 'Nenhum resultado' }),
     el('p', {
       class: 'empty-state__text',
-      text: nothing
-        ? 'Ainda não há músicas cadastradas. Entre no painel administrativo para cadastrar a primeira sessão.'
-        : 'Nenhuma música corresponde à busca e aos filtros aplicados. Ajuste os critérios ou limpe os filtros.',
+      text: 'Nenhuma música corresponde à busca e aos filtros aplicados. Ajuste os critérios ou limpe os filtros.',
     }),
-    nothing
-      ? el('a', { class: 'btn btn--secondary', href: ROUTES.login }, ['Acessar o painel'])
-      : el('button', {
-          type: 'button',
-          class: 'btn btn--secondary',
-          onClick: () => {
-            state.term = '';
-            state.filters = emptyFilters();
-            window.location.reload();
-          },
-        }, ['Limpar busca e filtros']),
+    el(
+      'button',
+      {
+        type: 'button',
+        class: 'btn btn--secondary',
+        onClick: () => {
+          state.term = '';
+          state.filters = emptyFilters();
+          window.location.reload();
+        },
+      },
+      ['Limpar busca e filtros'],
+    ),
   ]);
 }
 
 function renderLoading() {
   const results = $('[data-results]');
   if (!results) return;
-  mount(results, el('div', { class: 'loading-state' }, [
-    el('div', { class: 'spinner' }),
-    el('span', { text: 'Carregando biblioteca...' }),
-  ]));
-}
-
-function renderError(error) {
-  const results = $('[data-results]');
-  if (!results) return;
-  mount(results, el('div', { class: 'empty-state' }, [
-    icon('alert', { size: 32, class: 'text-faint' }),
-    el('h2', { class: 'empty-state__title', text: 'Não foi possível carregar a biblioteca' }),
-    el('p', { class: 'empty-state__text', text: error instanceof Error ? error.message : String(error) }),
-  ]));
-  notifyError('Falha ao carregar a biblioteca.');
-}
-
-/** Formata o total de bytes da biblioteca. */
-export function librarySizeLabel(bytes) {
-  return formatBytes(bytes);
+  mount(
+    results,
+    el('div', { class: 'loading-state' }, [
+      el('div', { class: 'spinner' }),
+      el('span', { text: 'Carregando biblioteca...' }),
+    ]),
+  );
 }

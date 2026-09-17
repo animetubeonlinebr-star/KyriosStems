@@ -131,10 +131,6 @@ export function byTitle(a, b) {
   return compareText(a.title, b.title);
 }
 
-/** Comparador para ordenação por atualização (mais recente primeiro). */
-export function byUpdatedAtDesc(a, b) {
-  return String(b.updatedAt ?? '').localeCompare(String(a.updatedAt ?? ''));
-}
 
 function toNumberOrNull(value) {
   if (value === null || value === undefined || value === '') return null;

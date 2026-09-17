@@ -6,20 +6,15 @@
  * não conheçam detalhes de persistência.
  */
 
-import { fetchSongs, fetchSessions, fetchSong, fetchSessionsBySong, getLastSource } from '../repositories/firestore-repository.js';
+import {
+  fetchSongs,
+  fetchSessions,
+  fetchSong,
+  fetchSessionsBySong,
+} from '../repositories/firestore-repository.js';
 import { groupByDaw, markCurrentVersions, byDawThenVersion } from '../models/daw-session.js';
-import { compareText, unique } from '../core/format.js';
-import { byTitle } from '../models/song.js';
-
-/**
- * @typedef {Object} LibrarySnapshot
- * @property {import('../models/song.js').Song[]} songs
- * @property {import('../models/daw-session.js').DawSession[]} sessions
- * @property {Map<string, import('../models/daw-session.js').DawSession[]>} sessionsBySong
- * @property {string} source
- * @property {string|null} error
- * @property {LibraryFacets} facets
- */
+import { compareText, normalizeText, unique } from '../core/format.js';
+import { byTitle, searchIndex as songSearchIndex } from '../models/song.js';
 
 /**
  * @typedef {Object} LibraryFacets
@@ -31,7 +26,10 @@ import { byTitle } from '../models/song.js';
  * @property {number} totalBytes
  */
 
-/** Carrega toda a biblioteca e deriva as facetas de filtro. */
+/**
+ * Carrega toda a biblioteca e deriva as facetas de filtro.
+ * `isDemo` e `error` permitem à interface avisar que os dados não são reais.
+ */
 export async function loadLibrary() {
   const [songsResult, sessionsResult] = await Promise.all([fetchSongs(), fetchSessions()]);
 
@@ -45,64 +43,59 @@ export async function loadLibrary() {
     songs: [...songsResult.items].sort(byTitle),
     sessions: sessionsResult.items,
     sessionsBySong,
-    source: sessionsResult.source === 'demo' ? sessionsResult.source : getLastSource() ?? songsResult.source,
+    isDemo: isDemo(songsResult, sessionsResult),
     error: songsResult.error || sessionsResult.error,
     facets: buildFacets(songsResult.items, sessionsResult.items),
   };
 }
 
-/** Carrega uma música e suas sessões, com as versões já marcadas. */
+/** Carrega uma música e suas sessões, com as versões atuais já marcadas. */
 export async function loadSongDetail(songId) {
   const [songResult, sessionsResult] = await Promise.all([
     fetchSong(songId),
     fetchSessionsBySong(songId),
   ]);
 
-  const ordered = [...sessionsResult.items].sort(byDawThenVersion);
-  const sessions = markCurrentVersions(ordered).sort(byDawThenVersion);
+  const sessions = markCurrentVersions([...sessionsResult.items].sort(byDawThenVersion));
 
   return {
     song: songResult.item,
-    sessions,
+    sessions: sessions.sort(byDawThenVersion),
     byDaw: groupByDaw(sessions),
-    source: sessionsResult.source,
+    isDemo: isDemo(songResult, sessionsResult),
     error: songResult.error || sessionsResult.error,
   };
 }
 
 /** Deriva as opções de filtro a partir dos dados carregados. */
 export function buildFacets(songs, sessions) {
-  const sessionCount = sessions.length;
-  const totalBytes = sessions.reduce(
-    (sum, session) => sum + (Number(session.packageSize) || 0),
-    0,
-  );
-
   return {
     artists: unique(songs.map((song) => song.artist)).sort(compareText),
     keys: unique(songs.map((song) => song.key)).sort(compareText),
     categories: unique(songs.map((song) => song.category)).sort(compareText),
     daws: unique(sessions.map((session) => session.daw)).sort(compareText),
-    sessionCount,
-    totalBytes,
+    sessionCount: sessions.length,
+    totalBytes: sessions.reduce((sum, session) => sum + (Number(session.packageSize) || 0), 0),
   };
 }
 
-/** Filtra a biblioteca por texto de busca. */
-export function searchLibrary(songs, term, searchIndexOf) {
-  const needle = String(term ?? '').trim();
+/** Filtra músicas pelo termo de busca (título, intérprete, álbum, tags). */
+export function searchSongs(songs, term) {
+  const needle = normalizeText(term);
   if (!needle) return songs;
-
-  const normalized = searchIndexOf(needle);
-  return songs.filter((song) => searchIndexOf(song).includes(normalized));
+  return songs.filter((song) => songSearchIndex(song).includes(needle));
 }
 
 /** Estatísticas do dashboard administrativo. */
-export function statistics(library) {
+export function statistics(songs, sessions) {
   return {
-    songs: library.songs.length,
-    sessions: library.facets.sessionCount,
-    packages: library.sessions.filter((session) => Boolean(session.packagePath)).length,
-    bytes: library.facets.totalBytes,
+    songs: songs.length,
+    sessions: sessions.length,
+    packages: sessions.filter((session) => Boolean(session.packagePath)).length,
+    bytes: sessions.reduce((sum, session) => sum + (Number(session.packageSize) || 0), 0),
   };
+}
+
+function isDemo(...results) {
+  return results.some((result) => result.source === 'demo');
 }

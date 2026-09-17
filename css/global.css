@@ -686,36 +686,6 @@ h3 {
 }
 
 /* --------------------------------------------------------------------------
-   Waveform decorativa (identidade visual de áudio)
-   -------------------------------------------------------------------------- */
-
-.waveform {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  height: 28px;
-}
-
-.waveform__bar {
-  width: 3px;
-  border-radius: var(--radius-pill);
-  background: var(--color-border-strong);
-}
-
-.waveform__bar:nth-child(4n + 1) {
-  height: 40%;
-}
-.waveform__bar:nth-child(4n + 2) {
-  height: 70%;
-}
-.waveform__bar:nth-child(4n + 3) {
-  height: 100%;
-}
-.waveform__bar:nth-child(4n + 4) {
-  height: 55%;
-}
-
-/* --------------------------------------------------------------------------
    Utilidades
    -------------------------------------------------------------------------- */
 

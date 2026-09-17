@@ -12,7 +12,12 @@ import {
   formatDuration,
 } from '../core/format.js';
 import { loadSongDetail } from '../services/library-service.js';
-import { preparePackageDownload, prepareFileDownload, startDownload, largePackageWarning } from '../services/download-service.js';
+import {
+  preparePackageDownload,
+  prepareFileDownload,
+  startDownload,
+  largePackageWarning,
+} from '../services/download-service.js';
 import { groupFiles, versionLabel } from '../models/daw-session.js';
 import { sessionCard } from '../components/session-card.js';
 import { mountChrome } from '../components/app-header.js';
@@ -24,7 +29,6 @@ const state = {
   song: null,
   sessions: [],
   byDaw: new Map(),
-  activeSessionId: null,
   filesSessionId: null,
 };
 
@@ -41,22 +45,42 @@ async function init() {
     return;
   }
 
-  try {
-    const detail = await loadSongDetail(songId);
-    state.song = detail.song;
-    state.sessions = detail.sessions;
-    state.byDaw = detail.byDaw;
+  const detail = await loadSongDetail(songId);
+  state.song = detail.song;
+  state.sessions = detail.sessions;
+  state.byDaw = detail.byDaw;
 
-    if (!detail.song) {
-      renderNotFound('A música solicitada não existe na biblioteca.');
-      return;
-    }
-
-    document.title = `${detail.song.title} — KyriosStems`;
-    render();
-  } catch (error) {
-    renderNotFound(error instanceof Error ? error.message : String(error));
+  if (!detail.song) {
+    renderNotFound('A música solicitada não existe na biblioteca.');
+    return;
   }
+
+  document.title = `${detail.song.title} — KyriosStems`;
+  renderNotices(detail);
+  render();
+}
+
+/* -------------------------------------------------------------------------- */
+/* Avisos                                                                     */
+/* -------------------------------------------------------------------------- */
+
+/** Avisa quando a leitura do Firestore falhou e os dados não são reais. */
+function renderNotices(detail) {
+  const mountPoint = $('[data-notices]');
+  if (!mountPoint || !detail.isDemo) return;
+
+  clear(mountPoint).append(
+    el('div', { class: 'alert alert--error', role: 'alert' }, [
+      icon('alert', { size: 16 }),
+      el('div', {}, [
+        el('strong', { text: 'Dados de demonstração. ' }),
+        el('span', {
+          text: detail.error || 'O Firebase ainda não está configurado.',
+        }),
+        el('p', { class: 'field__hint mt-4', text: 'Os downloads estão indisponíveis.' }),
+      ]),
+    ]),
+  );
 }
 
 /* -------------------------------------------------------------------------- */

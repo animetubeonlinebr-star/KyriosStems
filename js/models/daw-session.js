@@ -4,7 +4,6 @@
  */
 
 import { createId, normalizeText, compareText } from '../core/format.js';
-import { STORAGE_FOLDERS } from '../core/constants.js';
 
 /**
  * @typedef {Object} SessionFile
@@ -128,21 +127,6 @@ export function validate(session) {
   return { valid: Object.keys(errors).length === 0, errors };
 }
 
-/** Caminho do ZIP principal no Storage: sessions/{songId}/{sessionId}/package/session.zip */
-export function packageStoragePath(songId, sessionId, fileName = 'session.zip') {
-  return `${storageBase(songId, sessionId)}/${STORAGE_FOLDERS.package}/${fileName}`;
-}
-
-/** Caminho de um arquivo individual no Storage. */
-export function fileStoragePath(songId, sessionId, category, fileName) {
-  return `${storageBase(songId, sessionId)}/${category}/${fileName}`;
-}
-
-/** Base de armazenamento de uma sessão. */
-export function storageBase(songId, sessionId) {
-  return `sessions/${songId}/${sessionId}`;
-}
-
 /** Rótulo curto da versão: "v1", "v2"... */
 export function versionLabel(session) {
   return `v${Number(session.version) || 1}`;
@@ -220,12 +204,6 @@ export function groupFiles(files) {
   return new Map([...groups.entries()].sort((a, b) => order.indexOf(a[0]) - order.indexOf(b[0])));
 }
 
-/** Soma dos tamanhos dos arquivos de uma sessão. */
-export function totalFilesSize(session) {
-  const files = session.files ?? [];
-  if (!files.length) return Number(session.packageSize) || 0;
-  return files.reduce((sum, file) => sum + (Number(file.size) || 0), 0);
-}
 
 function toNumberOrNull(value) {
   if (value === null || value === undefined || value === '') return null;

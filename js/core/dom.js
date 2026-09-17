@@ -8,13 +8,13 @@ export function $(selector, scope = document) {
   return scope.querySelector(selector);
 }
 
-/** @param {string} selector @param {ParentNode} [scope] */
-export function $$(selector, scope = document) {
-  return Array.from(scope.querySelectorAll(selector));
-}
-
 /**
  * Cria um elemento.
+ *
+ * Todo conteúdo textual entra por `textContent`. Não há prop de HTML bruto:
+ * os dados vêm do Firestore (títulos, artistas, tags) e nunca devem ser
+ * interpretados como marcação.
+ *
  * @param {string} tag
  * @param {Record<string, unknown>} [props]
  * @param {Array<Node|string>} [children]
@@ -29,8 +29,6 @@ export function el(tag, props = {}, children = []) {
       node.className = value;
     } else if (key === 'dataset') {
       Object.assign(node.dataset, value);
-    } else if (key === 'html') {
-      node.innerHTML = value;
     } else if (key === 'text') {
       node.textContent = value;
     } else if (key.startsWith('on') && typeof value === 'function') {
@@ -64,17 +62,8 @@ export function mount(node, child) {
   return node;
 }
 
-export function setHidden(node, hidden) {
-  if (!node) return;
-  node.hidden = Boolean(hidden);
-}
-
 export function setText(node, value) {
   if (node) node.textContent = value ?? '';
-}
-
-export function toggleClass(node, className, on) {
-  if (node) node.classList.toggle(className, Boolean(on));
 }
 
 /** Executa o callback quando o DOM estiver pronto. */
@@ -84,15 +73,6 @@ export function ready(fn) {
   } else {
     fn();
   }
-}
-
-/** Anuncia uma mensagem em uma região aria-live. */
-export function announce(node, message) {
-  if (!node) return;
-  node.textContent = '';
-  window.setTimeout(() => {
-    node.textContent = message;
-  }, 60);
 }
 
 /** Extrai os parâmetros da query string da URL atual. */

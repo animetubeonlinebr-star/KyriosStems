@@ -166,3 +166,19 @@ export const UPLOAD_LIMITS = {
   /** Tamanho a partir do qual o download exige confirmação do usuário. */
   largePackageBytes: 512 * 1024 * 1024,
 };
+
+/**
+ * Limites de tempo para operações de rede.
+ *
+ * O Firestore, em dispositivo offline ou projeto mal configurado, não rejeita a
+ * leitura: ele repete com backoff. Sem estes limites a interface fica
+ * carregando indefinidamente.
+ */
+export const NETWORK = {
+  /** Carregamento dos módulos do SDK pelo CDN. */
+  sdkTimeoutMs: 12000,
+  /** Consulta ao Firestore. */
+  readTimeoutMs: 10000,
+  /** Autenticação e verificação de sessão. */
+  authTimeoutMs: 8000,
+};

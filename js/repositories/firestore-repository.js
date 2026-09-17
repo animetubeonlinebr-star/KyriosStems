@@ -2,120 +2,152 @@
  * KyriosStems - js/repositories/firestore-repository.js
  * Persistência de músicas e sessões.
  *
- * Leituras degradam para a biblioteca de demonstração quando o Firebase não
- * está configurado, está offline ou bloqueado por Security Rules. Escritas
- * nunca degradam: falham explicitamente, porque só o administrador escreve.
+ * Comportamento de leitura:
+ * - Sem Firebase configurado: modo demonstração, dados locais, sem rede.
+ * - Firebase configurado: lê do Firestore com limite de tempo.
+ * - Falha de leitura: devolve a biblioteca de demonstração JUNTO com o erro,
+ *   para que a interface avise que os dados exibidos não são reais. Sem esse
+ *   aviso, o usuário acreditaria estar vendo a biblioteca verdadeira.
+ *
+ * Escritas nunca degradam: falham explicitamente, porque só o administrador
+ * escreve e um erro silencioso aqui seria destrutivo.
  */
 
 import { initFirebase, isFirebaseConfigured } from '../firebase/app.js';
-import { COLLECTIONS } from '../core/constants.js';
+import { COLLECTIONS, NETWORK } from '../core/constants.js';
+import { withTimeout } from '../core/async.js';
 import { demoLibrary } from '../data/demo-data.js';
 import * as Song from '../models/song.js';
 import * as DawSession from '../models/daw-session.js';
 
-/** Origem dos dados retornados nas leituras. */
+/** Origem dos dados de uma leitura. */
 export const SOURCE = {
   firestore: 'firestore',
   demo: 'demo',
 };
 
-/** Última origem usada; consumida pela barra de status do admin. */
-let lastSource = null;
-
-export function getLastSource() {
-  return lastSource;
-}
+/* -------------------------------------------------------------------------- */
+/* Leituras                                                                    */
+/* -------------------------------------------------------------------------- */
 
 /** Lê todas as músicas. */
-export async function fetchSongs() {
-  if (!isFirebaseConfigured()) {
-    lastSource = SOURCE.demo;
-    return { items: demoLibrary().map((entry) => entry.song), source: SOURCE.demo, error: null };
-  }
-
-  try {
-    const items = await readCollection(COLLECTIONS.songs, Song.fromDocument);
-    lastSource = SOURCE.firestore;
-    return { items, source: SOURCE.firestore, error: null };
-  } catch (error) {
-    lastSource = SOURCE.demo;
-    return {
-      items: demoLibrary().map((entry) => entry.song),
-      source: SOURCE.demo,
-      error: message(error),
-    };
-  }
+export function fetchSongs() {
+  return readCollection(COLLECTIONS.songs, Song.fromDocument, demoSongs);
 }
 
 /** Lê todas as sessões. */
-export async function fetchSessions() {
-  if (!isFirebaseConfigured()) {
-    lastSource = SOURCE.demo;
-    return {
-      items: demoLibrary().flatMap((entry) => entry.sessions),
-      source: SOURCE.demo,
-      error: null,
-    };
-  }
-
-  try {
-    const items = await readCollection(COLLECTIONS.sessions, DawSession.fromDocument);
-    lastSource = SOURCE.firestore;
-    return { items, source: SOURCE.firestore, error: null };
-  } catch (error) {
-    lastSource = SOURCE.demo;
-    return {
-      items: demoLibrary().flatMap((entry) => entry.sessions),
-      source: SOURCE.demo,
-      error: message(error),
-    };
-  }
+export function fetchSessions() {
+  return readCollection(COLLECTIONS.sessions, DawSession.fromDocument, demoSessions);
 }
 
 /** Lê uma música pelo id. */
-export async function fetchSong(songId) {
+export function fetchSong(songId) {
+  const demo = () => demoLibrary().find((entry) => entry.song.id === songId)?.song ?? null;
+
   if (!isFirebaseConfigured()) {
-    const found = demoLibrary().find((entry) => entry.song.id === songId);
-    return { item: found ? found.song : null, source: SOURCE.demo, error: null };
+    return Promise.resolve({ item: demo(), source: SOURCE.demo, error: null });
   }
 
-  try {
-    const { db, sdk } = await initFirebase();
+  return readOne(demo, async (sdk, db) => {
     const snapshot = await sdk.firestoreModule.getDoc(
       sdk.firestoreModule.doc(db, COLLECTIONS.songs, songId),
     );
-    if (!snapshot.exists()) return { item: null, source: SOURCE.firestore, error: null };
-    return {
-      item: Song.fromDocument(snapshot.id, snapshot.data()),
-      source: SOURCE.firestore,
-      error: null,
-    };
-  } catch (error) {
-    const found = demoLibrary().find((entry) => entry.song.id === songId);
-    return { item: found ? found.song : null, source: SOURCE.demo, error: message(error) };
-  }
+    return snapshot.exists() ? Song.fromDocument(snapshot.id, snapshot.data()) : null;
+  });
 }
 
 /** Lê as sessões de uma música. */
-export async function fetchSessionsBySong(songId) {
+export function fetchSessionsBySong(songId) {
+  const demo = () => demoLibrary().find((entry) => entry.song.id === songId)?.sessions ?? [];
+
   if (!isFirebaseConfigured()) {
-    const found = demoLibrary().find((entry) => entry.song.id === songId);
-    return { items: found ? found.sessions : [], source: SOURCE.demo, error: null };
+    return Promise.resolve({ items: demo(), source: SOURCE.demo, error: null });
   }
 
-  try {
-    const { db, sdk } = await initFirebase();
-    const query = sdk.firestoreModule.query(
-      sdk.firestoreModule.collection(db, COLLECTIONS.sessions),
-      sdk.firestoreModule.where('songId', '==', songId),
+  return readList(demo, async (sdk, db) => {
+    const snapshot = await sdk.firestoreModule.getDocs(
+      sdk.firestoreModule.query(
+        sdk.firestoreModule.collection(db, COLLECTIONS.sessions),
+        sdk.firestoreModule.where('songId', '==', songId),
+      ),
     );
-    const snapshot = await sdk.firestoreModule.getDocs(query);
-    const items = snapshot.docs.map((doc) => DawSession.fromDocument(doc.id, doc.data()));
-    return { items, source: SOURCE.firestore, error: null };
-  } catch (error) {
-    const found = demoLibrary().find((entry) => entry.song.id === songId);
-    return { items: found ? found.sessions : [], source: SOURCE.demo, error: message(error) };
+    return snapshot.docs.map((item) => DawSession.fromDocument(item.id, item.data()));
+  });
+}
+
+/* -------------------------------------------------------------------------- */
+/* Leitura resiliente                                                          */
+/* -------------------------------------------------------------------------- */
+
+/** Lê uma coleção inteira do Firestore. */
+function readCollection(name, mapper, demo) {
+  if (!isFirebaseConfigured()) {
+    return Promise.resolve({ items: demo(), source: SOURCE.demo, error: null });
   }
+
+  return readList(demo, async (sdk, db) => {
+    const snapshot = await sdk.firestoreModule.getDocs(sdk.firestoreModule.collection(db, name));
+    return snapshot.docs.map((doc) => mapper(doc.id, doc.data()));
+  });
+}
+
+/**
+ * Lê uma lista com limite de tempo, degradando para dados locais.
+ *
+ * Sem limite, uma leitura do Firestore em dispositivo offline não rejeita: ela
+ * repete com backoff e a interface fica carregando indefinidamente. O erro é
+ * devolvido junto para que a interface possa avisar o usuário.
+ *
+ * @param {() => any[]} demo
+ * @param {(sdk: object, db: object) => Promise<any[]>} load
+ */
+async function readList(demo, load) {
+  try {
+    return { items: await run(load), source: SOURCE.firestore, error: null };
+  } catch (error) {
+    return { items: demo(), source: SOURCE.demo, error: describe(error) };
+  }
+}
+
+/** Igual a `readList`, para um único documento. */
+async function readOne(demo, load) {
+  try {
+    return { item: await run(load), source: SOURCE.firestore, error: null };
+  } catch (error) {
+    return { item: demo(), source: SOURCE.demo, error: describe(error) };
+  }
+}
+
+/** Inicializa o SDK e executa a consulta, ambos com limite de tempo. */
+async function run(load) {
+  const { db, sdk } = await withTimeout(
+    initFirebase(),
+    NETWORK.sdkTimeoutMs,
+    'carregar o SDK do Firebase',
+  );
+  return withTimeout(load(sdk, db), NETWORK.readTimeoutMs, 'consultar o Firestore');
+}
+
+function demoSongs() {
+  return demoLibrary().map((entry) => entry.song);
+}
+
+function demoSessions() {
+  return demoLibrary().flatMap((entry) => entry.sessions);
+}
+
+/** Traduz erros do SDK em mensagens acionáveis. */
+function describe(error) {
+  if (error?.code === 'permission-denied') {
+    return 'Leitura negada pelas Security Rules do Firestore. Publique as regras descritas em docs/security.md.';
+  }
+  if (error?.code === 'unavailable' || error?.code === 'deadline-exceeded') {
+    return 'O Firestore não respondeu. Verifique a conexão com a internet.';
+  }
+  if (error?.code === 'failed-precondition') {
+    return 'O Firestore não está provisionado neste projeto. Ative o banco no console do Firebase.';
+  }
+  return error instanceof Error ? error.message : String(error);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -141,10 +173,7 @@ export async function updateSong(songId, changes) {
   return payload;
 }
 
-/**
- * Exclui uma música e todas as suas sessões.
- * Os arquivos no Storage são removidos pelo chamador antes desta operação.
- */
+/** Exclui uma música e todas as suas sessões. */
 export async function deleteSong(songId) {
   const { db, sdk } = await initFirebase();
   const sessions = await sdk.firestoreModule.getDocs(
@@ -186,16 +215,4 @@ export async function updateSession(sessionId, changes) {
 export async function deleteSession(sessionId) {
   const { db, sdk } = await initFirebase();
   await sdk.firestoreModule.deleteDoc(sdk.firestoreModule.doc(db, COLLECTIONS.sessions, sessionId));
-}
-
-/* -------------------------------------------------------------------------- */
-
-async function readCollection(name, mapper) {
-  const { db, sdk } = await initFirebase();
-  const snapshot = await sdk.firestoreModule.getDocs(sdk.firestoreModule.collection(db, name));
-  return snapshot.docs.map((doc) => mapper(doc.id, doc.data()));
-}
-
-function message(error) {
-  return error instanceof Error ? error.message : String(error);
 }

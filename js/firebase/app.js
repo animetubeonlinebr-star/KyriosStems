@@ -11,9 +11,7 @@ import { firebaseConfig, FIREBASE_SDK_VERSION, isFirebaseConfigured } from './co
 
 const CDN_BASE = `https://www.gstatic.com/firebasejs/${FIREBASE_SDK_VERSION}`;
 
-/** @type {Promise<import('firebase/app').FirebaseApp>|null} */
-let appPromise = null;
-/** @type {Promise<object>|null} */
+/** @type {Promise<{app: object, auth: object, db: object, storage: object, sdk: object}>|null} */
 let servicesPromise = null;
 
 export { isFirebaseConfigured };
@@ -24,47 +22,46 @@ function loadSdk(moduleName) {
 }
 
 /**
- * Inicializa o Firebase uma única vez.
- * @returns {Promise<object>} { app, auth, db, storage, sdk }
+ * Inicializa o Firebase uma única vez e reutiliza a mesma instância.
+ *
+ * Uma tentativa que falha (CDN fora do ar, rede instável) é descartada do
+ * cache, para que a próxima chamada tente de novo em vez de repetir o erro
+ * para sempre.
+ *
+ * @returns {Promise<{app: object, auth: object, db: object, storage: object, sdk: object}>}
  */
 export function initFirebase() {
   if (servicesPromise) return servicesPromise;
 
-  servicesPromise = (async () => {
-    if (!isFirebaseConfigured()) {
-      throw new Error('Firebase não configurado. Preencha js/firebase/config.js.');
-    }
-
-    const [appModule, authModule, firestoreModule, storageModule] = await Promise.all([
-      loadSdk('app'),
-      loadSdk('auth'),
-      loadSdk('firestore'),
-      loadSdk('storage'),
-    ]);
-
-    const app = appModule.getApps().length
-      ? appModule.getApp()
-      : appModule.initializeApp(firebaseConfig);
-
-    const auth = authModule.getAuth(app);
-    const db = firestoreModule.getFirestore(app);
-    const storage = storageModule.getStorage(app);
-
-    return { app, auth, db, storage, sdk: { appModule, authModule, firestoreModule, storageModule } };
-  })();
+  servicesPromise = createServices().catch((error) => {
+    servicesPromise = null;
+    throw error;
+  });
 
   return servicesPromise;
 }
 
-/** Acesso ao app já inicializado (ou null). */
-export function getFirebaseApp() {
-  return appPromise;
-}
+async function createServices() {
+  if (!isFirebaseConfigured()) {
+    throw new Error('Firebase não configurado. Preencha js/firebase/config.js.');
+  }
 
-/**
- * Reinicia o estado de inicialização. Usado em testes e no logout completo.
- */
-export function resetFirebase() {
-  appPromise = null;
-  servicesPromise = null;
+  const [appModule, authModule, firestoreModule, storageModule] = await Promise.all([
+    loadSdk('app'),
+    loadSdk('auth'),
+    loadSdk('firestore'),
+    loadSdk('storage'),
+  ]);
+
+  const app = appModule.getApps().length
+    ? appModule.getApp()
+    : appModule.initializeApp(firebaseConfig);
+
+  return {
+    app,
+    auth: authModule.getAuth(app),
+    db: firestoreModule.getFirestore(app),
+    storage: storageModule.getStorage(app),
+    sdk: { appModule, authModule, firestoreModule, storageModule },
+  };
 }
