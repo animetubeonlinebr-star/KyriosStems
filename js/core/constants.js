@@ -6,7 +6,7 @@
 export const APP = {
   name: 'KyriosStems',
   fullName: 'KYRIOS STEMS',
-  tagline: 'Personal Worship Multitrack Library',
+  tagline: 'Repositório de Stems',
   version: '1.0.0',
 };
 

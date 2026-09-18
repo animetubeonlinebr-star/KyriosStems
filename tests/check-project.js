@@ -153,6 +153,21 @@ for (const cls of usedClasses) {
 }
 if (problems === beforeStyles) ok(`${usedClasses.size} classes usadas tem estilo`);
 
+// Cores fixas fora dos tokens fragmentam o tema: uma troca de paleta deixa
+// residuos para tras. Todo valor de cor deve sair de variables.css.
+const themedFiles = ['global.css', 'components.css', 'catalog.css', 'song.css', 'admin.css'];
+const beforeColors = problems;
+for (const file of themedFiles) {
+  const source = fs.readFileSync(path.join(ROOT, 'css', file), 'utf8');
+  for (const line of source.split('\n')) {
+    if (line.includes('data:image')) continue;
+    if (/#[0-9A-Fa-f]{3,8}\b/.test(line)) {
+      fail(`cor fixa em ${file}: ${line.trim()}`);
+    }
+  }
+}
+if (problems === beforeColors) ok('nenhuma cor fixa fora dos tokens');
+
 // ---------------------------------------------------------------------------
 // 4. Paginas existem e seus assets resolvem
 // ---------------------------------------------------------------------------

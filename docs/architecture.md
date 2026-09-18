@@ -24,6 +24,28 @@ servidor de aplicação: o navegador fala diretamente com o Firebase.
                          DOWNLOAD
 ```
 
+## Design system
+
+Tema escuro, definido em `css/variables.css`. As cores foram extraídas das
+referências visuais em `Designe/` (`telas_desktop.jpg` e `telas_Mobile.jpg`).
+
+| Papel | Cor | Uso |
+|---|---|---|
+| Fundo | `#0D1114` | Fundo da página |
+| Superfície | `#1D2225` | Cartões e painéis |
+| Superfície interna | `#161B1E` | Blocos dentro de cartões |
+| Realce | `#262C30` | Estado de interação |
+| Borda | `#2A3135` | Divisores e contornos |
+| Texto | `#E3E8EB` | Texto principal |
+| Texto secundário | `#9AA4AA` | Apoio |
+| Acento | `#4153D3` | Ações principais |
+
+A profundidade vem das três superfícies, não de sombra: no escuro uma sombra
+pesada sujaria o fundo. As sombras existem apenas para modais e toasts.
+
+Todas as cores passam por tokens. Há uma verificação que reprova cor fixa fora
+de `variables.css`, para o tema não se fragmentar.
+
 ## Divisão de responsabilidades
 
 | Camada | Pasta | Papel |

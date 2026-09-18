@@ -277,7 +277,7 @@
 .wizard-step.is-done {
   border-color: var(--color-success-border);
   background: var(--color-success-soft);
-  color: #065f46;
+  color: var(--color-success);
 }
 
 .wizard-panel {

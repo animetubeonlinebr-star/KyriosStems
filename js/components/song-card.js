@@ -1,10 +1,12 @@
 /**
  * KyriosStems - js/components/song-card.js
  * Cartão de música na grade do catálogo.
+ *
+ * Segue a referência visual: título, intérprete, linha de dados
+ * (BPM, gênero, tom) e o botão ABRIR.
  */
 
 import { el } from '../core/dom.js';
-import { formatBpm } from '../core/format.js';
 import { ROUTES, QUERY } from '../core/constants.js';
 import { icon } from '../ui/icons.js';
 
@@ -17,54 +19,49 @@ export function songUrl(songId) {
  * @param {{sessions: import('../models/daw-session.js').DawSession[]}} [context]
  */
 export function songCard(song, { sessions = [] } = {}) {
-  const daws = [...new Set(sessions.map((session) => session.daw).filter(Boolean))].sort();
-  const sessionCount = sessions.length;
   const url = songUrl(song.id);
+  const sessionCount = sessions.length;
 
-  const specs = el('div', { class: 'song-card__spec' }, [
-    song.key ? el('span', { class: 'song-card__spec-key mono', text: song.key }) : null,
-    song.key && song.bpm ? el('span', { class: 'song-card__spec-divider', text: '•' }) : null,
-    song.bpm ? el('span', { class: 'mono', text: `${song.bpm} BPM` }) : null,
-    song.timeSignature
-      ? el('span', { class: 'song-card__spec-divider', text: '•' })
-      : null,
-    song.timeSignature ? el('span', { class: 'mono', text: song.timeSignature }) : null,
-  ]);
-
-  const dawBadges = daws.length
-    ? el(
-        'div',
-        { class: 'song-card__daws' },
-        daws.map((daw) => el('span', { class: 'badge badge--signal', text: daw })),
-      )
-    : el('div', { class: 'song-card__daws' }, [
-        el('span', { class: 'badge badge--muted', text: 'Sem sessões' }),
-      ]);
+  // Linha de dados: BPM, gênero e tom, na ordem da referência.
+  const facts = [];
+  if (song.bpm) facts.push(`${song.bpm} BPM`);
+  if (song.category) facts.push(song.category);
+  if (song.key) facts.push(`Tom ${song.key}`);
 
   return el('article', { class: 'song-card' }, [
     el('div', { class: 'song-card__head' }, [
-      el('div', {}, [
+      el('div', { class: 'song-card__ident' }, [
         el('h3', { class: 'song-card__title' }, [el('a', { href: url, text: song.title })]),
         el('p', { class: 'song-card__artist', text: song.artist || 'Intérprete não informado' }),
       ]),
-      el('span', { class: 'song-card__count mono', title: 'Sessões disponíveis' }, [
-        String(sessionCount).padStart(2, '0'),
-      ]),
+      sessionCount
+        ? el('span', { class: 'badge badge--muted mono', text: `${sessionCount} sessão(ões)` })
+        : el('span', { class: 'badge badge--muted', text: 'Sem sessões' }),
     ]),
-    specs,
-    song.tags?.length
+
+    facts.length
       ? el(
-          'ul',
-          { class: 'chip-list' },
-          song.tags.slice(0, 4).map((tag) => el('li', { class: 'badge badge--muted', text: tag })),
+          'p',
+          { class: 'song-card__facts' },
+          facts.flatMap((fact, index) =>
+            index === 0 ? [fact] : [el('span', { class: 'song-card__dot', text: '•' }), fact],
+          ),
         )
       : null,
-    dawBadges,
+
     el('div', { class: 'song-card__footer' }, [
-      el('span', { class: 'song-card__count mono', text: formatBpm(song.bpm) }),
-      el('span', { class: 'song-card__cta' }, [
-        'Ver sessão',
-        icon('download', { size: 12 }),
+      el(
+        'div',
+        { class: 'song-card__daws' },
+        sessions.length
+          ? [...new Set(sessions.map((session) => session.daw).filter(Boolean))]
+              .sort()
+              .map((daw) => el('span', { class: 'badge badge--signal', text: daw }))
+          : [],
+      ),
+      el('a', { class: 'btn btn--secondary btn--sm', href: url }, [
+        'Abrir',
+        icon('chevron', { size: 14 }),
       ]),
     ]),
   ]);

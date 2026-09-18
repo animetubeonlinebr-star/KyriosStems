@@ -1,66 +1,69 @@
 /* ==========================================================================
    KyriosStems - variables.css
-   Design system: limpo, moderno e funcional.
+   Design system: tema escuro.
 
-   Cores frias e neutras para transmitir estabilidade; o índigo fica reservado
-   às ações principais. O fundo nunca é branco puro: o branco fica nos cartões,
-   que se destacam do cinza por uma sombra suave.
+   Valores extraidos das referencias visuais em Designe/ (telas_desktop.jpg e
+   telas_Mobile.jpg). O fundo e quase preto, as superficies sao um grafite
+   levemente mais claro e o acento e um indigo.
+
+   As tres superficies existem para dar profundidade sem sombra: o fundo da
+   pagina, o cartao e o realce de interacao.
    ========================================================================== */
 
 :root {
-  /* --- Marca e ações ------------------------------------------------------ */
-  --color-primary: #4f46e5;
-  --color-primary-hover: #4338ca;
-  --color-primary-soft: #eef2ff;
-  --color-primary-border: #c7d2fe;
-  --color-primary-strong: #3730a3;
+  /* --- Marca e acoes ------------------------------------------------------ */
+  --color-primary: #4153d3;
+  --color-primary-hover: #4d5fe0;
+  --color-primary-soft: rgba(65, 83, 211, 0.16);
+  --color-primary-border: rgba(65, 83, 211, 0.45);
+  --color-primary-strong: #8b96f0;
 
-  /* --- Superfícies -------------------------------------------------------- */
-  --color-bg: #f3f4f6;
-  --color-surface: #ffffff;
-  --color-surface-muted: #f9fafb;
-  --color-surface-hover: #f3f4f6;
-  --color-border: #e5e7eb;
-  --color-border-strong: #d1d5db;
+  /* --- Superficies -------------------------------------------------------- */
+  --color-bg: #0d1114;            /* fundo da pagina */
+  --color-surface: #1d2225;       /* cartoes */
+  --color-surface-muted: #161b1e; /* blocos internos */
+  --color-surface-hover: #262c30; /* realce de interacao */
+  --color-border: #2a3135;
+  --color-border-strong: #3a4247;
 
   /* --- Texto -------------------------------------------------------------- */
-  --color-text: #1f2937;
-  --color-text-muted: #6b7280;
-  --color-text-faint: #9ca3af;
+  --color-text: #e3e8eb;
+  --color-text-muted: #9aa4aa;
+  --color-text-faint: #6b757b;
   --color-text-inverse: #ffffff;
 
   /* --- Feedback ----------------------------------------------------------- */
-  --color-error: #ef4444;
-  --color-error-soft: #fef2f2;
-  --color-error-border: #fecaca;
+  --color-error: #f87171;
+  --color-error-soft: rgba(248, 113, 113, 0.12);
+  --color-error-border: rgba(248, 113, 113, 0.4);
 
-  --color-success: #10b981;
-  --color-success-soft: #ecfdf5;
-  --color-success-border: #a7f3d0;
+  --color-success: #34d399;
+  --color-success-soft: rgba(52, 211, 153, 0.12);
+  --color-success-border: rgba(52, 211, 153, 0.4);
 
-  --color-warning: #f59e0b;
-  --color-warning-soft: #fffbeb;
-  --color-warning-border: #fde68a;
+  --color-warning: #fbbf24;
+  --color-warning-soft: rgba(251, 191, 36, 0.12);
+  --color-warning-border: rgba(251, 191, 36, 0.4);
 
-  --color-info: #3b82f6;
-  --color-info-soft: #eff6ff;
-  --color-info-border: #bfdbfe;
+  --color-info: #60a5fa;
+  --color-info-soft: rgba(96, 165, 250, 0.12);
+  --color-info-border: rgba(96, 165, 250, 0.4);
 
   /* --- Tipografia --------------------------------------------------------- */
   --font-ui: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
     "Helvetica Neue", Arial, sans-serif;
-  /* Reservado a valores técnicos: nomes de arquivo, taxas, versões. */
+  /* Reservado a valores tecnicos: nomes de arquivo, taxas, versoes. */
   --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
     "Liberation Mono", monospace;
 
-  --text-xs: 0.75rem;      /* 12px */
-  --text-sm: 0.875rem;     /* 14px */
-  --text-base: 1rem;       /* 16px */
-  --text-lg: 1.125rem;     /* 18px */
-  --text-xl: 1.25rem;      /* 20px */
-  --text-2xl: 1.5rem;      /* 24px */
-  --text-3xl: 1.875rem;    /* 30px */
-  --text-4xl: 2.25rem;     /* 36px */
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 1.875rem;
+  --text-4xl: 2.25rem;
 
   --weight-regular: 400;
   --weight-medium: 500;
@@ -70,7 +73,7 @@
   --leading-tight: 1.25;
   --leading-normal: 1.55;
 
-  /* --- Espaçamento (escala de 4px) ---------------------------------------- */
+  /* --- Espacamento (escala de 4px) ---------------------------------------- */
   --space-1: 0.25rem;
   --space-2: 0.5rem;
   --space-3: 0.75rem;
@@ -88,15 +91,13 @@
   --radius-lg: 12px;
   --radius-pill: 999px;
 
-  /* --- Sombras: suaves, só para dar profundidade -------------------------- */
-  --shadow-xs: 0 1px 2px rgba(17, 24, 39, 0.04);
-  --shadow-sm: 0 1px 3px rgba(17, 24, 39, 0.06), 0 1px 2px rgba(17, 24, 39, 0.04);
-  --shadow-md: 0 4px 6px -1px rgba(17, 24, 39, 0.07),
-    0 2px 4px -2px rgba(17, 24, 39, 0.05);
-  --shadow-lg: 0 10px 20px -5px rgba(17, 24, 39, 0.1),
-    0 4px 8px -4px rgba(17, 24, 39, 0.05);
+  /* --- Sombras: discretas; no escuro a profundidade vem das superficies ---- */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 12px 28px rgba(0, 0, 0, 0.55);
 
-  /* --- Toque: alvo mínimo recomendado no celular -------------------------- */
+  /* --- Toque: alvo minimo recomendado no celular -------------------------- */
   --control-height: 44px;
   --control-height-lg: 48px;
 
@@ -106,7 +107,7 @@
   --header-height: 60px;
   --bottom-nav-height: 64px;
 
-  --focus-ring: 0 0 0 3px rgba(79, 70, 229, 0.18);
+  --focus-ring: 0 0 0 3px rgba(65, 83, 211, 0.35);
   --transition: 150ms ease;
 
   --z-header: 100;
