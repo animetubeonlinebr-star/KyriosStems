@@ -10,19 +10,10 @@ export const APP = {
   version: '1.0.0',
 };
 
-/** Coleções do Firestore. */
-export const COLLECTIONS = {
-  songs: 'songs',
-  sessions: 'sessions',
-};
-
 /**
- * Prefixo raiz no Firebase Storage.
- * sessions/{songId}/{sessionId}/package/session.zip
+ * Categorias de arquivo dentro de uma sessão. Viram subpastas quando os
+ * arquivos são organizados, e são as mesmas do CHECK em session_files.
  */
-export const STORAGE_ROOT = 'sessions';
-
-/** Subpastas dentro de uma sessão no Storage. */
 export const STORAGE_FOLDERS = {
   package: 'package',
   project: 'project',
@@ -159,7 +150,7 @@ export const QUERY = {
   sessionId: 'session',
 };
 
-/** Limites práticos de upload (o Firebase Storage tem limite configurável). */
+/** Limites práticos de upload. */
 export const UPLOAD_LIMITS = {
   maxFileBytes: 2 * 1024 * 1024 * 1024,
   maxFiles: 200,
@@ -170,21 +161,24 @@ export const UPLOAD_LIMITS = {
 /**
  * Limites de tempo para operações de rede.
  *
- * O Firestore, em dispositivo offline ou projeto mal configurado, não rejeita a
- * leitura: ele repete com backoff. Sem estes limites a interface fica
- * carregando indefinidamente.
+ * A API é um servidor comum: se não responder, a requisição fica pendurada até
+ * o navegador desistir. Sem estes limites a interface ficaria carregando
+ * indefinidamente, sem dizer o que está acontecendo.
  */
 export const NETWORK = {
-  /** Carregamento dos módulos do SDK pelo CDN. */
-  sdkTimeoutMs: 12000,
-  /** Consulta ao Firestore. */
-  readTimeoutMs: 10000,
+  /** Requisição comum à API. */
+  apiTimeoutMs: 15000,
   /** Autenticação e verificação de sessão. */
-  authTimeoutMs: 8000,
+  authTimeoutMs: 12000,
+  /** Envio de um arquivo direto para o Google Drive. */
+  uploadTimeoutMs: 30 * 60 * 1000,
 };
 
 /**
- * Cota de armazenamento do plano gratuito do Firebase Storage, usada apenas
- * como referência visual no painel. O valor real é cobrado por uso.
+ * Cota de armazenamento usada apenas como referência visual no painel.
+ *
+ * É o espaço gratuito da conta Google que guarda os arquivos. O valor real
+ * depende do plano da conta e é compartilhado com o restante do Drive, então
+ * serve como ordem de grandeza, não como medição.
  */
-export const STORAGE_QUOTA_BYTES = 5 * 1024 * 1024 * 1024;
+export const STORAGE_QUOTA_BYTES = 15 * 1024 * 1024 * 1024;

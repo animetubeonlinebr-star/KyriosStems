@@ -2,8 +2,8 @@
  * KyriosStems - js/services/library-service.js
  * Regras da biblioteca: carrega o catálogo, agrupa e deriva facetas de filtro.
  *
- * Fica entre os repositórios (Firestore) e a apresentação, para que as páginas
- * não conheçam detalhes de persistência.
+ * Fica entre os repositórios (API) e a apresentação, para que as páginas não
+ * conheçam detalhes de persistência.
  */
 
 import {
@@ -11,7 +11,7 @@ import {
   fetchSessions,
   fetchSong,
   fetchSessionsBySong,
-} from '../repositories/firestore-repository.js';
+} from '../repositories/library-repository.js';
 import { groupByDaw, markCurrentVersions, byDawThenVersion } from '../models/daw-session.js';
 import { compareText, normalizeText, unique } from '../core/format.js';
 import { byTitle, searchIndex as songSearchIndex } from '../models/song.js';
@@ -91,7 +91,7 @@ export function statistics(songs, sessions) {
   return {
     songs: songs.length,
     sessions: sessions.length,
-    packages: sessions.filter((session) => Boolean(session.packagePath)).length,
+    packages: sessions.filter((session) => Boolean(session.packageFileId)).length,
     bytes: sessions.reduce((sum, session) => sum + (Number(session.packageSize) || 0), 0),
   };
 }

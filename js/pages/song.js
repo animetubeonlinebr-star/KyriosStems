@@ -64,7 +64,7 @@ async function init() {
 /* Avisos                                                                     */
 /* -------------------------------------------------------------------------- */
 
-/** Avisa quando a leitura do Firestore falhou e os dados não são reais. */
+/** Avisa quando a leitura da API falhou e os dados não são reais. */
 function renderNotices(detail) {
   const mountPoint = $('[data-notices]');
   if (!mountPoint || !detail.isDemo) return;
@@ -149,7 +149,7 @@ function renderPrimaryDownload() {
   if (!current) return;
 
   const warning = largePackageWarning(current.packageSize);
-  const hasPackage = Boolean(current.packagePath);
+  const hasPackage = Boolean(current.packageFileId);
 
   mount(mountPoint, el('div', { class: 'primary-download' }, [
     el('div', {}, [
@@ -226,7 +226,7 @@ function versionRow(session) {
       el('button', {
         type: 'button',
         class: 'btn btn--secondary btn--sm',
-        disabled: !session.packagePath,
+        disabled: !session.packageFileId,
         onClick: () => handlePackageDownload(session),
       }, [icon('download', { size: 12 }), 'Baixar']),
     ]),

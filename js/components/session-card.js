@@ -16,7 +16,7 @@ import { icon } from '../ui/icons.js';
  * @param {() => void} [options.onToggleFiles]
  */
 export function sessionCard(session, { isCurrent = false, onDownload, onToggleFiles } = {}) {
-  const hasPackage = Boolean(session.packagePath);
+  const hasPackage = Boolean(session.packageFileId);
 
   const specs = el('div', { class: 'spec-list' }, [
     spec('Formato', session.format || '—'),

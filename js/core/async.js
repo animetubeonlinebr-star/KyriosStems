@@ -2,9 +2,9 @@
  * KyriosStems - js/core/async.js
  * Utilidades para operações que dependem da rede.
  *
- * O Firestore, quando o dispositivo está offline ou o projeto está mal
- * configurado, não rejeita a leitura imediatamente: ele repete a tentativa com
- * backoff. Sem um limite de tempo, a interface ficaria carregando para sempre.
+ * Uma requisição sem resposta deixa a interface carregando indefinidamente, sem
+ * dizer o que está acontecendo. Todo acesso à rede passa por aqui para que
+ * exista um prazo e uma mensagem de erro úteis.
  */
 
 /**

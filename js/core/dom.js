@@ -12,7 +12,7 @@ export function $(selector, scope = document) {
  * Cria um elemento.
  *
  * Todo conteúdo textual entra por `textContent`. Não há prop de HTML bruto:
- * os dados vêm do Firestore (títulos, artistas, tags) e nunca devem ser
+ * os dados vêm da API (títulos, artistas, tags) e nunca devem ser
  * interpretados como marcação.
  *
  * @param {string} tag

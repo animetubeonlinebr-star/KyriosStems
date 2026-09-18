@@ -5,16 +5,11 @@
 
 import { $, clear, el, mount, ready, queryParams } from '../core/dom.js';
 import { ROUTES } from '../core/constants.js';
-import { isFirebaseConfigured } from '../firebase/app.js';
-import { signIn, authErrorMessage, observeAuth, isAdmin } from '../firebase/auth.js';
+import { signIn, authErrorMessage, verifySession, isSignedIn } from '../api/auth.js';
 import { icon } from '../ui/icons.js';
 
 const MOTIVES = {
-  'nao-configurado':
-    'O Firebase ainda não está configurado. Preencha js/firebase/config.js antes de entrar.',
-  'tempo-esgotado': 'A verificação da sessão demorou demais. Tente novamente.',
-  'nao-autorizado':
-    'Sua conta não possui acesso administrativo. A autorização vem da custom claim admin.',
+  'nao-autorizado': 'Entre com a conta administrativa para abrir o painel.',
   'sessao-encerrada': 'Sessão encerrada.',
 };
 
@@ -23,18 +18,14 @@ ready(init);
 async function init() {
   renderShell();
 
-  if (!isFirebaseConfigured()) {
-    showMotive('nao-configurado');
-    return;
-  }
-
-  const session = await observeCurrentSession();
-  if (session?.isAdmin) {
-    window.location.replace(ROUTES.admin);
-    return;
-  }
-  if (session?.user && !session.isAdmin) {
-    showMotive('nao-autorizado');
+  // Quem já tem sessão válida não precisa ver o formulário. A confirmação é
+  // feita contra a API: guardar o token no navegador não prova que ele vale.
+  if (isSignedIn()) {
+    const session = await verifySession();
+    if (session) {
+      window.location.replace(ROUTES.admin);
+      return;
+    }
   }
 
   showMotive(queryParams().get('motivo'));
@@ -116,19 +107,7 @@ async function submit(email, password, button, feedback) {
   button.textContent = 'Entrando...';
 
   try {
-    const credential = await signIn(email, password);
-
-    if (!(await isAdmin(credential.user))) {
-      mount(
-        feedback,
-        alertBox(
-          'Esta conta não possui acesso administrativo. Conceda a custom claim admin ao usuário.',
-          'error',
-        ),
-      );
-      return;
-    }
-
+    await signIn(email, password);
     window.location.replace(ROUTES.admin);
   } catch (error) {
     mount(feedback, alertBox(authErrorMessage(error), 'error'));
@@ -148,29 +127,4 @@ function showMotive(motive) {
 
   const feedback = $('[data-feedback]');
   if (feedback) mount(feedback, alertBox(message, motive === 'sessao-encerrada' ? 'success' : 'info'));
-}
-
-/** Observa a sessão apenas durante o carregamento inicial. */
-function observeCurrentSession() {
-  return new Promise((resolve) => {
-    let settled = false;
-
-    observeAuth((session) => {
-      if (settled) return;
-      settled = true;
-      resolve(session);
-    }).catch(() => {
-      if (!settled) {
-        settled = true;
-        resolve(null);
-      }
-    });
-
-    window.setTimeout(() => {
-      if (!settled) {
-        settled = true;
-        resolve(null);
-      }
-    }, 6000);
-  });
 }

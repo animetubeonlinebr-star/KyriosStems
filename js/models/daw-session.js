@@ -9,7 +9,7 @@ import { createId, normalizeText, compareText } from '../core/format.js';
  * @typedef {Object} SessionFile
  * @property {string} name       Nome exibido
  * @property {string} path       Caminho relativo dentro do pacote
- * @property {string} storagePath Caminho completo no Firebase Storage
+ * @property {string} fileId     Identificador do arquivo no Google Drive
  * @property {number} size       Bytes
  * @property {string} category   package | project | audio | aux
  * @property {string} contentType
@@ -27,7 +27,7 @@ import { createId, normalizeText, compareText } from '../core/format.js';
  * @property {number|null} sampleRate
  * @property {number|null} bitDepth
  * @property {number|null} duration
- * @property {string} packagePath   Caminho do ZIP no Storage
+ * @property {string} packageFileId Id do ZIP no Google Drive
  * @property {number|null} packageSize
  * @property {SessionFile[]} files
  * @property {string} createdAt
@@ -44,7 +44,7 @@ export const SESSION_FIELDS = [
   'sampleRate',
   'bitDepth',
   'duration',
-  'packagePath',
+  'packageFileId',
   'packageSize',
   'files',
   'createdAt',
@@ -65,7 +65,7 @@ export function createSession(overrides = {}) {
     sampleRate: 48000,
     bitDepth: 24,
     duration: null,
-    packagePath: '',
+    packageFileId: '',
     packageSize: null,
     files: [],
     createdAt: now,
@@ -86,7 +86,6 @@ export function fromDocument(docId, data = {}) {
     files: Array.isArray(data.files) ? data.files : [],
   });
 }
-
 export function toDocument(session) {
   const payload = {};
   for (const field of SESSION_FIELDS) {
