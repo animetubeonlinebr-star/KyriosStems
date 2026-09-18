@@ -2,9 +2,8 @@
  * KyriosStems - backend/src/routes/auth.js
  * Login administrativo.
  *
- * Substitui o Firebase Authentication. A verificação vive aqui, no servidor:
- * antes, as Security Rules do Firestore decidiam quem podia escrever; agora a
- * decisão é do backend, que é o único com acesso ao banco.
+ * A verificação vive aqui, no servidor: a decisão de quem pode escrever é do
+ * backend, que é o único com acesso ao banco.
  */
 
 import { post, get } from '../http/router.js';

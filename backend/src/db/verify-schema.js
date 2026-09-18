@@ -1,6 +1,6 @@
 /**
  * KyriosStems - backend/src/db/verify-schema.js
- * Confere que as restrições do banco recusam o que firestore.rules recusava.
+ * Confere que as restrições do banco recusam conteúdo inválido.
  *
  * Cada caso grava um dado inválido e espera erro. Se algum passar, a migração
  * perdeu uma validação e este script falha — é a rede de segurança contra a

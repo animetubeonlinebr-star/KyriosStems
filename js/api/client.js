@@ -2,9 +2,8 @@
  * KyriosStems - js/api/client.js
  * Cliente HTTP da API.
  *
- * Substitui o Firebase Web SDK. Toda operação de rede passa por aqui, o que
- * mantém em um único lugar o endereço, o token, o limite de tempo e a tradução
- * de erro.
+ * Toda operação de rede passa por aqui, o que mantém em um único lugar o
+ * endereço, o token, o limite de tempo e a tradução de erro.
  *
  * O token de sessão vive em localStorage. Não é o ideal em teoria (um XSS
  * poderia lê-lo), mas a alternativa — cookie httpOnly — exigiria o backend em

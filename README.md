@@ -56,25 +56,29 @@ Vim Para Adorar-te
 
 ```text
                     ┌─────────────────┐
-                    │   GitHub Pages  │
+                    │  GitHub Pages   │
                     │ HTML5/CSS3/JS   │
                     └────────┬────────┘
-                             │ Firebase SDK
-            ┌────────────────┼────────────────┐
-            ▼                ▼                ▼
-       Firebase Auth     Firestore       Firebase Storage
-            │                │                │
-         ADMIN           METADADOS         ARQUIVOS
-                             │                ├── ZIP
-                             ▼                ├── WAV
-                         CATÁLOGO             ├── Projeto
-                             │                └── Auxiliares
+                             │ HTTPS + token de sessão
                              ▼
-                         DOWNLOAD
+                    ┌─────────────────┐
+                    │    Backend      │
+                    │  Node, sem      │
+                    │  framework      │
+                    └───┬─────────┬───┘
+                        │         │
+              ┌─────────▼──┐   ┌──▼──────────────┐
+              │   Aiven    │   │  Google Drive   │
+              │ PostgreSQL │   │                 │
+              │            │   │  ├── ZIP        │
+              │ METADADOS  │   │  ├── WAV        │
+              └────────────┘   │  └── Projeto    │
+                               └─────────────────┘
 ```
 
-O frontend é estático e não requer build. O Firebase é carregado dinamicamente pelo CDN
-apenas quando configurado.
+O frontend é estático e não requer build. O backend guarda os dois segredos — a
+senha do banco e o refresh token do Drive — e é o único que decide quem pode
+escrever.
 
 ---
 
@@ -95,17 +99,24 @@ kyrios-stems/
 │   ├── song.css
 │   └── admin.css
 ├── js/
-│   ├── core/               Constantes, DOM, formatação e async
-│   ├── firebase/           Configuração, inicialização e autenticação
+│   ├── core/               Constantes, config, DOM, formatação e async
+│   ├── api/                Cliente HTTP, sessão e autenticação
 │   ├── models/             Song e DawSession
-│   ├── repositories/       Acesso a Firestore e Storage
+│   ├── repositories/       Acesso à API: biblioteca e arquivos
 │   ├── services/           Biblioteca, download e publicação
 │   ├── components/         Cartões, busca, filtros, navegação
 │   ├── pages/              Controladores das páginas
 │   ├── ui/                 Ícones, toasts, modais
 │   └── data/               Biblioteca de demonstração
+├── backend/
+│   ├── src/                API: auth, db, drive, http, routes
+│   ├── migrations/         Esquema SQL
+│   ├── scripts/            create-admin, google-auth, drive-check
+│   ├── certs/              CA do Aiven
+│   └── tests/              Testes de integração
 ├── assets/
-└── docs/
+├── docs/
+└── tests/                  Verificação de integridade
 ```
 
 ---
@@ -145,7 +156,7 @@ kyrios-stems/
   "sampleRate": 48000,
   "bitDepth": 24,
   "duration": 248,
-  "packagePath": "sessions/song_001/session_001/package/session.zip",
+  "packageFileId": "1AbC...",
   "packageSize": 1073741824,
   "files": [],
   "createdAt": "...",
@@ -153,111 +164,92 @@ kyrios-stems/
 }
 ```
 
+Detalhes em `docs/database.md`.
+
 ---
 
 ## 6. Armazenamento
 
 ```text
-sessions/
-└── {songId}/
-    └── {sessionId}/
-        ├── package/
-        │   └── session.zip
-        ├── project/
-        │   └── projeto.rpp
-        ├── audio/
-        │   ├── 01 Drums.wav
-        │   └── 02 Bass.wav
-        └── aux/
-            └── README.txt
+{pasta raiz no Google Drive}/
+└── session_{sessionId}/
+    ├── session.zip
+    ├── projeto.rpp
+    ├── 01 Drums.wav
+    └── README.txt
 ```
 
 O ZIP é o pacote principal de download. Os arquivos individuais existem para consulta e
 download opcional.
 
+Os bytes dos arquivos **não passam pela API**: o backend cria a pasta e assina uma
+URL de envio retomável, e o navegador envia direto para o Drive. Um pacote de
+sessão pode ter gigabytes.
+
+Detalhes em `docs/storage.md`.
+
 ---
 
 ## 7. Modo demonstração
 
-Enquanto `js/firebase/config.js` mantiver os valores de exemplo, a aplicação funciona em
-**modo demonstração**: o catálogo é exibido com uma biblioteca local de exemplo, o login fica
-indisponível e o download é bloqueado com uma mensagem explícita.
+Quando a API não responde, a aplicação entra em **modo demonstração**: o catálogo
+é exibido com uma biblioteca local de exemplo e um aviso explícito de que os
+dados não são reais.
 
-Isso permite avaliar toda a interface antes de criar o projeto no Firebase.
+O aviso é obrigatório. Sem ele o usuário acreditaria estar vendo a biblioteca
+verdadeira.
 
 ---
 
-## 8. Configuração do Firebase
+## 8. Configuração
 
-### 8.1 Ativar os serviços
+O passo a passo completo está em **`docs/setup.md`**. Resumo:
 
-No [Console do Firebase](https://console.firebase.google.com), projeto `kyriosstems`:
+| Etapa | O que fazer |
+|---|---|
+| Banco | `backend/.env` com a senha do Aiven; `npm run migrate` |
+| Drive | Credencial OAuth *App para computador*; `npm run google-auth` |
+| Administrador | `npm run admin:create -- seu@email.com` |
+| Backend | Publicar em um host Node gratuito |
+| Frontend | Apontar `js/core/config.js` para o backend; ativar Pages |
 
-| Serviço | Onde | O que fazer |
-|---|---|---|
-| Authentication | Authentication > Sign-in method | Ativar **E-mail/senha** e criar o usuário administrador |
-| Firestore | Firestore Database | Criar o banco (modo produção) |
-| Storage | Storage | Ativar o bucket |
+### Segurança
 
-### 8.2 Publicar as Security Rules
-
-As regras estão versionadas no repositório. Publicar antes de cadastrar qualquer
-coisa:
-
-```bash
-npm install
-firebase login
-firebase use kyriosstems
-npm run deploy:rules
-```
-
-Sem as rules, o Firestore fica fechado por padrão — o que é seguro, mas o
-catálogo não carrega.
-
-### 8.3 Conceder o acesso administrativo
-
-O login exige a custom claim `admin`, que não pode ser definida pelo SDK Web:
-
-```bash
-# Gere uma chave de serviço no console:
-# Configurações do projeto > Contas de serviço > Gerar nova chave privada
-# Salve como serviceAccount.json na raiz (já está no .gitignore)
-
-npm run admin:grant -- seu@email.com
-```
-
-Para revogar: `npm run admin:grant -- seu@email.com --revoke`
-
-Depois disso, **entre novamente** no painel: o token em uso ainda carrega as
-claims antigas.
-
-### 8.4 Restringir a chave de API
-
-No Google Cloud Console, em *APIs e serviços > Credenciais*, limite a chave aos
-domínios do GitHub Pages e a `localhost` durante o desenvolvimento.
+Rotacione antes de tudo: a senha do banco e o `client_secret` do Google foram
+compartilhados em texto plano durante o desenvolvimento. Trate ambos como
+comprometidos.
 
 ---
 
 ## 9. Publicação no GitHub Pages
 
 O workflow `.github/workflows/pages.yml` publica automaticamente a cada push na
-`main`, após rodar a verificação de integridade e os testes das rules.
+`main`, após rodar a verificação de integridade.
 
 Ative uma vez em **Settings > Pages > Source: GitHub Actions**.
 
-O site fica em `https://<usuario>.github.io/KyriosStems/`.
+O backend é publicado separadamente. Veja `docs/setup.md`.
 
 ---
 
 ## 10. Desenvolvimento
 
 ```bash
-npm install
-
+# Frontend
 npm run serve          # servidor local em http://localhost:12000
 npm run check          # verificação de integridade do projeto
-npm run test:rules     # testa as Security Rules no emulador
-npm run deploy:rules   # publica as rules no Firebase
+
+# Backend
+cd backend
+npm install
+npm run migrate        # aplica as migrações SQL
+npm run migrate:status # lista o que falta
+npm run db:check       # testa a conexão com o Aiven
+npm run db:verify      # confere as restrições do banco
+npm run admin:create   # cria um administrador
+npm run drive:check    # confere a configuração do Drive
+npm test               # testes de integração da API
+npm start              # sobe a API em :8080
 ```
 
 ### Verificação automática
@@ -270,30 +262,28 @@ npm run deploy:rules   # publica as rules no Firebase
 - as páginas carregam módulos e seus assets existem
 - nenhum arquivo de mídia foi versionado
 
-`npm run test:rules` exercita as Security Rules contra o emulador, cobrindo o que
-deve ser permitido e o que deve ser negado.
+No backend, `npm run db:verify` grava dados inválidos e espera que as restrições
+do banco recusem. `npm test` exercita a API inteira contra o banco real, sem
+mocks.
 
 ---
 
 ## 11. Segurança
 
-A proteção dos dados é aplicada nas **Security Rules** do Firestore e do Storage,
-não na interface. A existência de `admin.html` não autoriza ninguém.
+A proteção é aplicada no **backend** e no **banco**, não na interface. A
+existência de `admin.html` não autoriza ninguém.
 
 ```text
-Aplicação pública    READ songs/sessions/arquivos   → permitido
-                     WRITE / DELETE                 → negado
+Aplicação pública    READ catálogo / download   → permitido
+                     WRITE / DELETE             → negado
 
 Administrador        READ / CREATE / UPDATE / DELETE / UPLOAD → permitido
-(custom claim admin)
+(token de sessão)
 ```
 
-As rules também validam o **conteúdo** gravado: campos permitidos, campos
-obrigatórios, limites de tamanho e faixas numéricas. Isso impede que um
-documento válido seja gravado com campos arbitrários.
-
-As chaves do Firebase Web SDK são públicas por natureza. A restrição de domínio
-nas chaves de API e as Security Rules são o que protege a biblioteca.
+As restrições do banco validam o **conteúdo** gravado: campos obrigatórios,
+limites de tamanho, faixas numéricas e categorias de arquivo. Isso impede que um
+registro válido seja gravado com valores arbitrários.
 
 Detalhes em `docs/security.md`.
 
@@ -305,9 +295,8 @@ Detalhes em `docs/security.md`.
 GitHub
    └── Código
 
-Firebase
-   ├── Banco
-   └── Arquivos de áudio
+Aiven            Google Drive
+   └── Metadados     └── Arquivos de áudio
 ```
 
 Os arquivos de áudio e os pacotes de sessão **não são armazenados no repositório
@@ -320,11 +309,11 @@ integridade falha se alguma for versionada.
 
 | Arquivo | Conteúdo |
 |---|---|
-| `docs/database-setup.md` | Passo a passo para criar o banco |
+| `docs/setup.md` | Passo a passo de configuração |
 | `docs/architecture.md` | Camadas, modos de operação, ordem de gravação |
-| `docs/database.md` | Coleções, campos e consultas |
-| `docs/storage.md` | Estrutura de pastas, envio e download |
-| `docs/security.md` | Rules, custom claim e restrição de chave |
+| `docs/database.md` | Tabelas, campos, validação e consultas |
+| `docs/storage.md` | Estrutura no Drive, envio e download |
+| `docs/security.md` | Autorização, tokens, CORS e segredos |
 | `docs/workflow.md` | Publicação, versionamento e manutenção |
 
 ---
@@ -335,11 +324,11 @@ integridade falha se alguma for versionada.
 
 - [x] Catálogo: lista, busca, filtros e página da música
 - [x] Modelos de dados e camada de acesso
-- [x] Firebase: configuração e Authentication
+- [x] Backend com Aiven PostgreSQL e Google Drive
 - [x] Administração: visão geral, biblioteca e cadastro em 5 etapas
-- [x] Upload de pacote e arquivos individuais
-- [x] Download do pacote completo
-- [x] Security Rules com testes automatizados
+- [x] Upload de pacote e arquivos individuais direto para o Drive
+- [x] Download do pacote completo com nome amigável
+- [x] Autorização por token de sessão e validação no banco
 - [x] Publicação no GitHub Pages
 
 ### Futuro

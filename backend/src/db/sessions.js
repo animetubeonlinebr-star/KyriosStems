@@ -62,10 +62,9 @@ export async function listFilesBySessions(sessionIds) {
 /**
  * Cria uma sessão e seus arquivos em uma única transação.
  *
- * Arquivos e sessão entram juntos de propósito. A ordem de gravação que
- * importava no Firebase (enviar arquivos antes de registrar a sessão) aqui é
- * garantida pela transação: não existe estado intermediário visível em que a
- * sessão aponte para arquivos que não foram registrados.
+ * Arquivos e sessão entram juntos de propósito. A transação garante que não
+ * existe estado intermediário visível em que a sessão aponte para arquivos que
+ * não foram registrados.
  */
 export async function createSession(session, files = []) {
   return withTransaction(async (client) => {

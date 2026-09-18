@@ -2,11 +2,10 @@
  * KyriosStems - js/repositories/file-repository.js
  * Envio e download dos arquivos de sessão, via Google Drive.
  *
- * Substitui storage-repository.js. A diferença central: os bytes NÃO passam
- * pela API. O backend cria as pastas e assina uma URL de envio retomável; o
- * navegador envia o arquivo direto para o Google Drive. Um pacote de sessão
- * pode ter gigabytes, e atravessar a API somaria latência e esbarraria no
- * limite de corpo da requisição.
+ * Os bytes NÃO passam pela API. O backend cria as pastas e assina uma URL de
+ * envio retomável; o navegador envia o arquivo direto para o Google Drive. Um
+ * pacote de sessão pode ter gigabytes, e atravessar a API somaria latência e
+ * esbarraria no limite de corpo da requisição.
  *
  * Estrutura no Drive:
  *   {pasta raiz}/

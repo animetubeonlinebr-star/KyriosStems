@@ -2,8 +2,7 @@
  * KyriosStems - backend/scripts/create-admin.js
  * Cria ou redefine a senha de um administrador.
  *
- * Substitui scripts/grant-admin.js do Firebase, que concedia a custom claim
- * `admin`. Agora a autorização é um registro no banco, com senha em hash.
+ * A autorização é um registro no banco, com senha em hash.
  *
  * Uso:
  *   node scripts/create-admin.js admin@exemplo.com

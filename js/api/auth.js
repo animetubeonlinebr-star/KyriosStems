@@ -2,9 +2,9 @@
  * KyriosStems - js/api/auth.js
  * Autenticação administrativa.
  *
- * Substitui js/firebase/auth.js. A autorização NÃO é decidida pela interface:
- * quem decide é a API, que verifica o token e o registro do administrador no
- * banco. Este módulo apenas evita exibir uma interface que não funcionaria.
+ * A autorização NÃO é decidida pela interface: quem decide é a API, que
+ * verifica o token e o registro do administrador no banco. Este módulo apenas
+ * evita exibir uma interface que não funcionaria.
  */
 
 import { get, post, setSession, clearSession, token, storedUser } from './client.js';

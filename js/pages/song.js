@@ -75,7 +75,7 @@ function renderNotices(detail) {
       el('div', {}, [
         el('strong', { text: 'Dados de demonstração. ' }),
         el('span', {
-          text: detail.error || 'O Firebase ainda não está configurado.',
+          text: detail.error || 'A API não respondeu.',
         }),
         el('p', { class: 'field__hint mt-4', text: 'Os downloads estão indisponíveis.' }),
       ]),

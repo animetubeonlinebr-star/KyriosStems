@@ -2,8 +2,8 @@
  * KyriosStems - backend/src/db/mappers.js
  * Converte linhas do PostgreSQL no formato que a aplicação já consumia.
  *
- * O frontend foi escrito contra documentos do Firestore, em camelCase. Manter
- * esse contrato evita reescrever as páginas: só a camada de repositório muda.
+ * O frontend usa camelCase. Manter esse contrato evita reescrever as páginas:
+ * só a camada de repositório muda.
  *
  * `numeric` e `bigint` chegam do driver como string, para não perder precisão.
  * A conversão para number acontece aqui, em um único lugar, para que nenhuma
@@ -15,7 +15,7 @@ function num(value) {
   return value === null || value === undefined ? null : Number(value);
 }
 
-/** Converte timestamptz em string ISO 8601, como era no Firestore. */
+/** Converte timestamptz em string ISO 8601. */
 function iso(value) {
   return value instanceof Date ? value.toISOString() : value;
 }
@@ -55,8 +55,7 @@ export function sessionFromRow(row) {
     sampleRate: num(row.sample_rate),
     bitDepth: num(row.bit_depth),
     duration: num(row.duration),
-    // Identificador do arquivo do pacote no Google Drive. Substitui o
-    // `packagePath` do Firebase Storage: não há caminho, há id de arquivo.
+    // Id do arquivo do pacote no Google Drive: não há caminho, há id.
     packageFileId: row.package_path || '',
     packageSize: num(row.package_size),
     driveFolderId: row.drive_folder_id,

@@ -2,9 +2,8 @@
  * KyriosStems - js/repositories/library-repository.js
  * Persistência de músicas e sessões na API.
  *
- * Substitui firestore-repository.js. Mantém o mesmo contrato de retorno
- * (`{ items, source, error }`), para que a camada de serviço e as páginas não
- * precisem saber de onde os dados vieram.
+ * O contrato de retorno é `{ items, source, error }`, para que a camada de
+ * serviço e as páginas não precisem saber de onde os dados vieram.
  *
  * Comportamento de leitura:
  * - API inalcançável: devolve a biblioteca de demonstração JUNTO com o erro,

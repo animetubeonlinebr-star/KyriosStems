@@ -3,8 +3,8 @@
  * Rotas de músicas e sessões.
  *
  * Leitura é pública (o catálogo é o propósito do sistema). Escrita exige token
- * de administrador. Os nomes dos campos na resposta são os mesmos que o
- * frontend já consumia do Firestore, para que as páginas não precisem mudar.
+ * de administrador. Os nomes dos campos na resposta são camelCase, como o
+ * frontend espera.
  */
 
 import { get, post, patch, del } from '../http/router.js';

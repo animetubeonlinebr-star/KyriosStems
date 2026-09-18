@@ -2,9 +2,8 @@
  * KyriosStems - backend/src/auth/tokens.js
  * Token de sessão assinado (HMAC-SHA256).
  *
- * Substitui a custom claim `admin` do Firebase Authentication. O token é
- * stateless: o backend confere a assinatura e a validade, sem consultar o
- * banco a cada requisição.
+ * O token é stateless: o backend confere a assinatura e a validade, sem
+ * consultar o banco a cada requisição.
  *
  * Formato: base64url(payload).base64url(assinatura)
  *

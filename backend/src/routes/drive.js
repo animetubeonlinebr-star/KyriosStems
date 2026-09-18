@@ -95,8 +95,8 @@ get('/api/drive/files/:fileId', {
  *
  * A biblioteca é privada, então o backend faz o papel de intermediário: confere
  * o token, busca no Drive e repassa o stream. O nome amigável vai no
- * Content-Disposition, o que resolve a limitação conhecida do Firebase Storage,
- * onde o atributo `download` era ignorado entre domínios.
+ * Content-Disposition. Sem isso o navegador salvaria com o nome do objeto, e
+ * não com o nome amigável.
  */
 get('/api/drive/files/:fileId/content', {
   // Sem autenticação quando o download é público (padrão). Com

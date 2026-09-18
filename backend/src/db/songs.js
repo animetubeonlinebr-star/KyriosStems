@@ -24,8 +24,8 @@ export async function getSong(id) {
 /**
  * Cria uma música.
  *
- * O id vem do cliente, como acontecia no Firestore: é ele que compõe a pasta
- * no Drive antes de qualquer gravação, então precisa existir antes da inserção.
+ * O id vem do cliente: é ele que compõe a pasta no Drive antes de qualquer
+ * gravação, então precisa existir antes da inserção.
  */
 export async function createSong(song) {
   const c = songToColumns(song);

@@ -119,8 +119,8 @@ function renderShell() {
     ]),
     el('div', { class: 'admin-statusbar' }, [
       el('span', {}, [
-        dot('data-status-firestore'),
-        el('span', { 'data-status-firestore-text': true, text: 'API: verificando' }),
+        dot('data-status-api'),
+        el('span', { 'data-status-api-text': true, text: 'API: verificando' }),
       ]),
       el('span', {}, [
         dot('data-status-storage'),
@@ -219,8 +219,8 @@ async function refreshLibrary() {
 function updateStatusBar() {
   const { isDemo, error, sessions } = state.library;
 
-  const dot = document.querySelector('[data-status-firestore]');
-  const text = document.querySelector('[data-status-firestore-text]');
+  const dot = document.querySelector('[data-status-api]');
+  const text = document.querySelector('[data-status-api-text]');
   const connected = !isDemo;
 
   dot?.classList.toggle('admin-statusbar__dot--on', connected);
