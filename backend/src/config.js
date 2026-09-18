@@ -66,6 +66,18 @@ export const server = {
     .split(',')
     .map((origin) => origin.trim())
     .filter(Boolean),
+  /**
+   * Download do pacote liberado para qualquer visitante.
+   *
+   * O catálogo já é público e o download é o propósito do sistema, então o
+   * padrão acompanha o comportamento anterior (a leitura no Firebase Storage
+   * era pública). A pasta no Drive é privada: quem entrega os bytes é o
+   * backend, mediante o id do arquivo.
+   *
+   * Defina como `false` para exigir o token de administrador também no
+   * download — útil se a biblioteca deixar de ser pública.
+   */
+  publicDownload: optional('KYRIOS_PUBLIC_DOWNLOAD', 'true') !== 'false',
 };
 
 /** Autenticação administrativa. */

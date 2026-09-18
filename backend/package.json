@@ -9,7 +9,11 @@
     "migrate": "node src/db/migrate.js",
     "migrate:status": "node src/db/migrate.js --status",
     "db:check": "node src/db/smoke.js",
-    "start": "node src/server.js"
+    "db:verify": "node src/db/verify-schema.js",
+    "admin:create": "node scripts/create-admin.js",
+    "drive:check": "node scripts/drive-check.js",
+    "start": "node src/server.js",
+    "test": "node tests/api.test.js"
   },
   "keywords": [],
   "author": "",
