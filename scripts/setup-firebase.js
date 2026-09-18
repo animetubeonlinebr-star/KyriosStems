@@ -35,7 +35,10 @@ const APIS = [
   'identitytoolkit.googleapis.com',
 ];
 
-const STORAGE_LOCATION = 'US';
+// Região do banco e do bucket. São Paulo fica mais perto do Brasil, o que
+// reduz a latência de leitura e escrita. A região do Firestore é PERMANENTE:
+// não pode ser alterada depois de criada.
+const LOCATION = 'southamerica-east1';
 
 function fail(message, hint) {
   console.error(`\n${message}\n`);
@@ -160,7 +163,7 @@ async function main() {
       method: 'POST',
       headers,
     },
-    { type: 'FIRESTORE_NATIVE', locationId: STORAGE_LOCATION },
+    { type: 'FIRESTORE_NATIVE', locationId: LOCATION },
   );
 
   if (dbRes.status === 200 || dbRes.status === 201) {

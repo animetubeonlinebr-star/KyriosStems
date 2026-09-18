@@ -320,6 +320,7 @@ integridade falha se alguma for versionada.
 
 | Arquivo | Conteúdo |
 |---|---|
+| `docs/database-setup.md` | Passo a passo para criar o banco |
 | `docs/architecture.md` | Camadas, modos de operação, ordem de gravação |
 | `docs/database.md` | Coleções, campos e consultas |
 | `docs/storage.md` | Estrutura de pastas, envio e download |
