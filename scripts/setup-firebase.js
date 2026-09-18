@@ -138,10 +138,10 @@ async function main() {
     if (res.status === 200) {
       console.log(`     ${api} ativada`);
     } else if (res.status === 403) {
-      fail(
-        `Sem permissao para ativar ${api}.`,
-        'A chave de servico precisa do papel Editor ou Owner no projeto.',
-      );
+      // A chave do Firebase Admin SDK normalmente nao tem permissao para
+      // administrar APIs. Se a API ja estiver ativa, o servico funciona
+      // mesmo assim, entao seguimos em frente em vez de abortar.
+      console.log(`     ${api}: sem permissao para ativar (pode ja estar ativa)`);
     } else {
       console.log(`     ${api}: HTTP ${res.status} ${JSON.stringify(res.body).slice(0, 120)}`);
     }

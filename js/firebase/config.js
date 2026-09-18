@@ -23,7 +23,7 @@ export const firebaseConfig = {
   projectId: 'kyriosstems',
   storageBucket: 'kyriosstems.firebasestorage.app',
   messagingSenderId: '460854566537',
-  appId: '1:460854566537:web:ac3b92c8063367ae417058',
+  appId: '1:460854566537:web:1b1886d3cec8cff4417058',
 };
 
 /**
