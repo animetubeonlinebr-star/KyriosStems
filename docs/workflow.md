@@ -76,8 +76,8 @@ Para publicar uma revisão:
 A versão anterior permanece disponível no histórico da página da música. A maior
 versão de cada DAW é marcada como atual.
 
-Se a versão for deixada em branco, `nextVersion` calcula a próxima a partir das
-sessões existentes daquela DAW.
+Se a versão for deixada em branco, a API calcula a próxima a partir das sessões
+existentes daquela DAW.
 
 ## Múltiplas DAWs
 
@@ -99,39 +99,53 @@ Oceans
 
 | Ação | Remove |
 |---|---|
-| Excluir sessão | Arquivos da sessão e o documento |
+| Excluir sessão | Arquivos e pasta da sessão no Drive, depois o registro |
 | Excluir música | Todas as sessões e todos os arquivos |
 
 Ambas exigem confirmação explícita e são irreversíveis.
 
+Se o Drive não responder, a exclusão é recusada e nada é removido. Isso é
+intencional: remover o registro antes dos arquivos deixaria arquivos órfãos
+ocupando cota, sem referência para encontrá-los depois.
+
 ## Manutenção
 
-### Verificar a integridade do projeto
+### Verificar a integridade do frontend
 
 ```bash
-node tests/check-project.js
+npm run check
 ```
 
 Confere imports, símbolos, classes de estilo, assets das páginas e ausência de
 arquivos de mídia versionados. Roda no CI antes de cada publicação.
 
-### Testar as Security Rules
+### Verificar as restrições do banco
 
 ```bash
-npm run test:rules
+cd backend
+npm run db:verify
 ```
 
-### Publicar as rules
+### Testar a API
 
 ```bash
-firebase deploy --only firestore:rules,storage
+cd backend
+npm test
+```
+
+### Estado das migrações
+
+```bash
+cd backend
+npm run migrate:status
 ```
 
 ## Publicação do site
 
 O workflow `.github/workflows/pages.yml` publica automaticamente a cada push na
-`main`. Antes de publicar, ele roda a verificação de integridade e os testes das
-rules; se qualquer um falhar, o site não é atualizado.
+`main`, após rodar a verificação de integridade do frontend.
 
-Apenas os arquivos da aplicação vão para o site. Testes, configuração do
-Firebase e documentação ficam de fora.
+Apenas os arquivos da aplicação vão para o site. Testes, backend e documentação
+ficam de fora.
+
+O backend é publicado separadamente, em um host próprio. Veja `docs/setup.md`.

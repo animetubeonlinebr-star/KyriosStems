@@ -65,7 +65,7 @@ export function createSong(overrides = {}) {
   };
 }
 
-/** Normaliza um documento vindo do Firestore para o formato do domínio. */
+/** Normaliza um registro vindo da API para o formato do domínio. */
 export function fromDocument(docId, data = {}) {
   return createSong({
     ...data,
