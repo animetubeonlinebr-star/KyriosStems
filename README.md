@@ -189,39 +189,117 @@ Isso permite avaliar toda a interface antes de criar o projeto no Firebase.
 
 ## 8. Configuração do Firebase
 
-1. Crie um projeto no [Console do Firebase](https://console.firebase.google.com).
-2. Ative **Authentication** (e-mail/senha), **Cloud Firestore** e **Storage**.
-3. Registre um app da Web e copie as chaves para `js/firebase/config.js`.
-4. Aplique as Security Rules descritas em `docs/security.md`.
-5. Conceda o acesso administrativo ao usuário:
+### 8.1 Ativar os serviços
 
-   ```bash
-   # Custom claim usada pelas Security Rules
-   admin: true
-   ```
+No [Console do Firebase](https://console.firebase.google.com), projeto `kyriosstems`:
 
-6. Publique o site em **GitHub Pages**.
+| Serviço | Onde | O que fazer |
+|---|---|---|
+| Authentication | Authentication > Sign-in method | Ativar **E-mail/senha** e criar o usuário administrador |
+| Firestore | Firestore Database | Criar o banco (modo produção) |
+| Storage | Storage | Ativar o bucket |
 
----
+### 8.2 Publicar as Security Rules
 
-## 9. Segurança
+As regras estão versionadas no repositório. Publicar antes de cadastrar qualquer
+coisa:
 
-A proteção dos dados é aplicada nas **Security Rules** do Firestore e do Storage, não apenas
-na interface administrativa. A existência de uma página administrativa não autoriza o usuário.
-
-```text
-Aplicação pública    READ songs/sessions   → permitido
-                     WRITE / DELETE        → negado
-
-Administrador        READ / CREATE / UPDATE / DELETE / UPLOAD → permitido
+```bash
+npm install
+firebase login
+firebase use kyriosstems
+npm run deploy:rules
 ```
 
-As chaves do Firebase Web SDK são públicas por natureza. A restrição do domínio nas chaves de
-API e as regras de segurança são o que protege a biblioteca.
+Sem as rules, o Firestore fica fechado por padrão — o que é seguro, mas o
+catálogo não carrega.
+
+### 8.3 Conceder o acesso administrativo
+
+O login exige a custom claim `admin`, que não pode ser definida pelo SDK Web:
+
+```bash
+# Gere uma chave de serviço no console:
+# Configurações do projeto > Contas de serviço > Gerar nova chave privada
+# Salve como serviceAccount.json na raiz (já está no .gitignore)
+
+npm run admin:grant -- seu@email.com
+```
+
+Para revogar: `npm run admin:grant -- seu@email.com --revoke`
+
+Depois disso, **entre novamente** no painel: o token em uso ainda carrega as
+claims antigas.
+
+### 8.4 Restringir a chave de API
+
+No Google Cloud Console, em *APIs e serviços > Credenciais*, limite a chave aos
+domínios do GitHub Pages e a `localhost` durante o desenvolvimento.
 
 ---
 
-## 10. Privacidade dos Arquivos
+## 9. Publicação no GitHub Pages
+
+O workflow `.github/workflows/pages.yml` publica automaticamente a cada push na
+`main`, após rodar a verificação de integridade e os testes das rules.
+
+Ative uma vez em **Settings > Pages > Source: GitHub Actions**.
+
+O site fica em `https://<usuario>.github.io/KyriosStems/`.
+
+---
+
+## 10. Desenvolvimento
+
+```bash
+npm install
+
+npm run serve          # servidor local em http://localhost:12000
+npm run check          # verificação de integridade do projeto
+npm run test:rules     # testa as Security Rules no emulador
+npm run deploy:rules   # publica as rules no Firebase
+```
+
+### Verificação automática
+
+`npm run check` confere, sem depender de rede:
+
+- imports resolvem e os símbolos importados existem
+- não há declarações duplicadas
+- toda classe usada pelo JavaScript tem estilo
+- as páginas carregam módulos e seus assets existem
+- nenhum arquivo de mídia foi versionado
+
+`npm run test:rules` exercita as Security Rules contra o emulador, cobrindo o que
+deve ser permitido e o que deve ser negado.
+
+---
+
+## 11. Segurança
+
+A proteção dos dados é aplicada nas **Security Rules** do Firestore e do Storage,
+não na interface. A existência de `admin.html` não autoriza ninguém.
+
+```text
+Aplicação pública    READ songs/sessions/arquivos   → permitido
+                     WRITE / DELETE                 → negado
+
+Administrador        READ / CREATE / UPDATE / DELETE / UPLOAD → permitido
+(custom claim admin)
+```
+
+As rules também validam o **conteúdo** gravado: campos permitidos, campos
+obrigatórios, limites de tamanho e faixas numéricas. Isso impede que um
+documento válido seja gravado com campos arbitrários.
+
+As chaves do Firebase Web SDK são públicas por natureza. A restrição de domínio
+nas chaves de API e as Security Rules são o que protege a biblioteca.
+
+Detalhes em `docs/security.md`.
+
+---
+
+## 12. Privacidade dos Arquivos
 
 ```text
 GitHub
@@ -232,11 +310,25 @@ Firebase
    └── Arquivos de áudio
 ```
 
-Os arquivos de áudio e os pacotes de sessão **não são armazenados no repositório Git**.
+Os arquivos de áudio e os pacotes de sessão **não são armazenados no repositório
+Git**. O `.gitignore` bloqueia as extensões de mídia, e a verificação de
+integridade falha se alguma for versionada.
 
 ---
 
-## 11. Roadmap
+## 13. Documentação
+
+| Arquivo | Conteúdo |
+|---|---|
+| `docs/architecture.md` | Camadas, modos de operação, ordem de gravação |
+| `docs/database.md` | Coleções, campos e consultas |
+| `docs/storage.md` | Estrutura de pastas, envio e download |
+| `docs/security.md` | Rules, custom claim e restrição de chave |
+| `docs/workflow.md` | Publicação, versionamento e manutenção |
+
+---
+
+## 14. Roadmap
 
 ### MVP
 
@@ -246,16 +338,18 @@ Os arquivos de áudio e os pacotes de sessão **não são armazenados no reposit
 - [x] Administração: visão geral, biblioteca e cadastro em 5 etapas
 - [x] Upload de pacote e arquivos individuais
 - [x] Download do pacote completo
-- [ ] Security Rules
-- [ ] Publicação no GitHub Pages
+- [x] Security Rules com testes automatizados
+- [x] Publicação no GitHub Pages
 
 ### Futuro
 
-Favoritos, histórico de downloads, capa da música, busca avançada, filtros combinados,
-estatísticas da biblioteca, validação de arquivos, visualização da estrutura do pacote e backup.
+Favoritos, histórico de downloads, capa da música, busca avançada, filtros
+combinados, estatísticas da biblioteca, validação de arquivos, visualização da
+estrutura do pacote e backup.
 
 ---
 
-## 12. Princípio Arquitetural
+## 15. Princípio Arquitetural
 
-> **KyriosStems armazena e organiza sessões prontas; não modifica o conteúdo musical.**
+> **KyriosStems armazena e organiza sessões prontas; não modifica o conteúdo
+> musical.**

@@ -12,6 +12,15 @@ build/
 # Mantenha js/firebase/config.js com valores de exemplo no repositório.
 js/firebase/config.local.js
 
+# Chave privada do SDK Admin: concede acesso total ao projeto.
+# Gere no console do Firebase e mantenha apenas na sua máquina.
+serviceAccount.json
+*serviceAccount*.json
+
+# Cache e logs dos emuladores do Firebase
+.firebase/
+*-debug.log
+
 # Cache e temporários do agente
 .agents_tmp/
 .agent_tmp/

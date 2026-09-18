@@ -1,0 +1,19 @@
+{
+  "name": "kyrios-stems",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Personal Worship Multitrack Library — biblioteca pessoal de sessões de louvor prontas para DAW.",
+  "scripts": {
+    "serve": "python3 -m http.server 12000",
+    "check": "node tests/check-project.js",
+    "test:rules": "firebase emulators:exec --only firestore,storage --project kyriosstems-rules-test \"node tests/rules.test.js\"",
+    "deploy:rules": "firebase deploy --only firestore:rules,storage",
+    "admin:grant": "node scripts/grant-admin.js"
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "^4.0.1",
+    "firebase": "^11.1.0",
+    "firebase-admin": "^13.0.1",
+    "firebase-tools": "^15.30.2"
+  }
+}

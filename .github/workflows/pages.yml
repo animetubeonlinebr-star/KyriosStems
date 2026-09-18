@@ -1,0 +1,67 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Publica em GitHub Pages mantendo o Firebase separado: o repositório guarda
+# apenas o código, a biblioteca de mídia vive no Firebase Storage.
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    name: Verificar
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Instalar dependências
+        run: npm install --no-audit --no-fund
+
+      - name: Conferir integridade do projeto
+        run: node tests/check-project.js
+
+      - name: Testar as Security Rules
+        run: |
+          npx firebase emulators:exec --only firestore,storage \
+            --project kyriosstems-rules-test "node tests/rules.test.js"
+
+  deploy:
+    name: Publicar
+    needs: verify
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # Publica apenas os arquivos da aplicação. Testes, configuração do
+      # Firebase e documentação não vão para o site.
+      - name: Preparar artefato
+        run: |
+          mkdir -p dist
+          cp -r index.html song.html login.html admin.html css js assets dist/
+          find dist -name '*.local.js' -delete
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+      - id: deployment
+        uses: actions/deploy-pages@v4
