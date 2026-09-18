@@ -13,7 +13,9 @@
     "admin:create": "node scripts/create-admin.js",
     "drive:check": "node scripts/drive-check.js",
     "start": "node src/server.js",
-    "test": "node tests/api.test.js"
+    "test": "node tests/api.test.js && node tests/drive-flow.test.js",
+    "test:api": "node tests/api.test.js",
+    "test:drive": "node tests/drive-flow.test.js"
   },
   "keywords": [],
   "author": "",
