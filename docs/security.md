@@ -2,112 +2,118 @@
 
 ## Princípio
 
-A segurança é aplicada nas **Security Rules** do Firestore e do Storage, não na
-interface. A existência de `admin.html` não autoriza ninguém: mesmo que alguém
-contorne o redirecionamento do frontend, o Firestore e o Storage recusam a
-escrita.
+A segurança é aplicada no **backend** e no **banco**, não na interface. A
+existência de `admin.html` não autoriza ninguém: mesmo que alguém contorne o
+redirecionamento do frontend, as rotas de escrita recusam e as restrições do
+banco rejeitam conteúdo inválido.
 
 ```text
-Aplicação pública    READ songs / sessions / arquivos   → permitido
-                     WRITE / DELETE                     → negado
+Aplicação pública    READ catálogo e download        → permitido
+                     WRITE / DELETE                  → negado (401)
 
-Administrador        READ / CREATE / UPDATE / DELETE    → permitido
-(custom claim admin)
+Administrador        READ / CREATE / UPDATE / DELETE → permitido
+(token de sessão)
 ```
 
-## Autorização: custom claim
+### Por que a segurança saiu do cliente
 
-O acesso administrativo é concedido por uma custom claim no token do usuário:
+Antes, as Security Rules do Firestore decidiam quem podia escrever. Agora a
+decisão é do backend, que é o único com acesso ao banco. Isso é mais forte: o
+navegador não tem credencial nenhuma do banco nem do Drive, apenas um token de
+sessão que a API emite e verifica.
 
-```json
-{ "admin": true }
+## Autorização
+
+O acesso administrativo é um registro em `admin_users`, com a senha em hash. O
+login devolve um token de sessão assinado.
+
+### Senha: scrypt
+
+```text
+scrypt$N$r$p$salt$hash
 ```
 
-A claim é verificada nas rules:
+Os parâmetros ficam gravados junto ao hash, para que o custo possa subir depois
+sem invalidar as senhas existentes. A verificação compara em tempo constante: um
+`===` vazaria informação pelo tempo de resposta, permitindo descobrir o hash byte
+a byte.
 
-```javascript
-function isAdmin() {
-  return request.auth != null && request.auth.token.admin == true;
-}
+O login verifica a senha **mesmo quando o e-mail não existe**, com um hash
+descartável. Sem isso, o tempo de resposta revelaria quais e-mails estão
+cadastrados.
+
+### Token: HMAC-SHA256
+
+```text
+base64url(payload).base64url(assinatura)
 ```
 
-O frontend usa a mesma claim apenas para não exibir uma interface que não
-funcionaria — nunca como mecanismo de proteção.
+Não é um JWT completo de propósito: sem cabeçalho com algoritmo negociável, não
+existe o ataque de confundir o verificador sobre qual algoritmo usar. A
+verificação é sempre HMAC-SHA256 com o segredo do servidor, e a comparação da
+assinatura também é em tempo constante.
 
-### Conceder a claim
+O token é stateless e expira (`KYRIOS_TOKEN_TTL`, padrão 12 horas). Sair do
+painel apenas descarta o token no navegador; para revogar de fato, troque o
+administrador ou o segredo.
 
-A claim não pode ser definida pelo SDK Web. Use o SDK Admin em Node:
+### Criar um administrador
 
 ```bash
-# 1. Gere uma chave de serviço no console do Firebase:
-#    Configurações do projeto > Contas de serviço > Gerar nova chave privada
-#    Salve como serviceAccount.json (NUNCA versione este arquivo)
-
-# 2. Conceda a claim
-node scripts/grant-admin.js seu@email.com
+cd backend
+npm run admin:create -- seu@email.com
 ```
 
-O script `scripts/grant-admin.js` acompanha o projeto. Para revogar, use
-`node scripts/grant-admin.js seu@email.com --revoke`.
+Sem `--password`, a senha é lida do terminal sem eco, para não ficar no histórico
+do shell nem aparecer na lista de processos.
 
-Depois de conceder, o usuário precisa entrar novamente para o token ser emitido
-com a claim.
+## Regras do banco
 
-## Regras do Firestore
+O que as Security Rules validavam agora são restrições `CHECK` em
+`backend/migrations/001_init.sql`:
 
-Arquivo: `firestore.rules`
-
-### Validação de conteúdo
-
-As rules não verificam apenas quem escreve, mas também **o que** é escrito:
-
-- campos permitidos por documento (`hasOnly`), impedindo gravação de campos
-  arbitrários como `isAdmin: true` dentro de uma música
-- campos obrigatórios (`hasAll`)
+- campos obrigatórios (`NOT NULL`)
 - limites de tamanho em todos os textos
 - faixas numéricas: BPM entre 20 e 400, sample rate entre 8000 e 384000
-- tamanho máximo das listas de tags e arquivos
+- categorias de arquivo restritas às quatro previstas
+- unicidade de `(song_id, daw, version)`
 
-A validação roda sobre o documento resultante, então cobre criação e atualização
-inclusive parcial — não há caminho para contornar os limites alterando um único
-campo.
+A validação no banco é a última linha de defesa: vale mesmo que um erro na API
+deixe passar um valor inválido.
 
-### Caminhos negados
-
-Qualquer caminho fora de `songs` e `sessions` é negado explicitamente:
-
-```javascript
-match /{document=**} {
-  allow read, write: if false;
-}
+```bash
+npm run db:verify
 ```
 
-## Regras do Storage
+O script grava dados inválidos e espera erro. Se algum passar, a validação foi
+afrouxada sem que ninguém percebesse.
 
-Arquivo: `storage.rules`
+## CORS
 
-- leitura pública, porque o catálogo e o download são o propósito do sistema
-- escrita e exclusão exigem a claim `admin`
-- apenas as quatro categorias previstas são aceitas
-- o caminho precisa ter exatamente a profundidade esperada
-- arquivos vazios e acima de 2 GiB são recusados
+`KYRIOS_ALLOWED_ORIGINS` é uma lista explícita. Usar `*` permitiria que qualquer
+site chamasse a API com as credenciais do usuário logado.
 
-## Chaves do Firebase
+Em produção, inclua o domínio do GitHub Pages:
 
-A `apiKey` no repositório é **pública por natureza** — o SDK Web é embarcado no
-navegador. Ela não é um segredo; serve para identificar o projeto, não para
-autorizar.
+```text
+KYRIOS_ALLOWED_ORIGINS=https://usuario.github.io,http://localhost:12000
+```
 
-O que protege os dados:
+## Download
 
-1. As Security Rules
-2. A restrição da chave de API por domínio
+O download é público por padrão (`KYRIOS_PUBLIC_DOWNLOAD=true`), acompanhando o
+comportamento anterior: o catálogo é público e o download é o propósito do
+sistema. A pasta no Drive continua privada — quem entrega os bytes é o backend.
 
-### Restringir a chave
+Se a biblioteca deixar de ser pública, defina `KYRIOS_PUBLIC_DOWNLOAD=false` e o
+download passa a exigir o token.
 
-No Google Cloud Console, em *APIs e serviços > Credenciais*, edite a chave e
-limite os domínios autorizados ao GitHub Pages e a `localhost` durante o
-desenvolvimento. Isso impede que a chave seja usada a partir de outros sites.
+## Cabeçalhos
+
+O nome amigável do download entra no `Content-Disposition`. O valor é reduzido a
+um nome de arquivo seguro antes disso: quebra de linha em um valor de cabeçalho
+permite injetar cabeçalhos arbitrários na resposta (response splitting), e o nome
+vem de um parâmetro da URL.
 
 ## Segredos
 
@@ -115,37 +121,41 @@ Nunca versionar:
 
 | Arquivo | Motivo |
 |---|---|
-| `serviceAccount.json` | Chave privada do SDK Admin |
-| `js/firebase/config.local.js` | Sobreposições locais |
+| `backend/.env` | Senha do banco, segredo do token, refresh token do Drive |
+| `js/core/config.local.js` | Sobreposições locais |
 | `.env`, `.env.*` | Variáveis de ambiente |
 
-O `.gitignore` já cobre esses caminhos.
+O `.gitignore` cobre esses caminhos.
+
+**Exceção deliberada:** `backend/certs/aiven-ca.pem` **é** versionado. É um
+certificado público, não uma chave. A CA do Aiven é autoassinada, então o
+repositório de CAs do sistema não a reconhece; sem o arquivo a conexão falha, e a
+alternativa seria desativar a verificação de TLS — o que exporia a senha do banco
+a um intermediário na rede.
 
 ## Limitação conhecida
 
-As rules não conseguem validar o **conteúdo** dos arquivos enviados: o Storage
-não inspeciona bytes. Um administrador poderia enviar um arquivo com qualquer
+Nem o banco nem a API inspecionam o **conteúdo** dos arquivos enviados: eles vão
+direto para o Drive. Um administrador poderia enviar um arquivo com qualquer
 conteúdo. Como só há um administrador — o dono da biblioteca — esse risco é
 aceito. Se houvesse múltiplos administradores, seria necessário validar no
 servidor.
 
-## Aplicar as rules
+## Aplicar as migrações
 
 ```bash
-firebase login
-firebase use kyriosstems
-firebase deploy --only firestore:rules,storage
+cd backend
+npm run migrate
+npm run db:verify
 ```
 
-Ou pelo console do Firebase, colando o conteúdo dos arquivos.
-
-## Testar as rules
+## Testar
 
 ```bash
-npm run test:rules
+cd backend
+npm test
 ```
 
-Os testes rodam contra o emulador e cobrem o que deve ser permitido e, o mais
-importante, o que deve ser negado: escrita anônima, usuário autenticado sem a
-claim, campos não previstos, valores fora de faixa e caminhos inválidos no
-Storage.
+Os testes cobrem o que deve ser permitido e, o mais importante, o que deve ser
+negado: escrita sem token, token forjado, senha incorreta, valores fora de faixa,
+versão duplicada e sessão de música inexistente.

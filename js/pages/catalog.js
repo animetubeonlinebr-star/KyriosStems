@@ -103,7 +103,7 @@ function waveHeight(index) {
 /* -------------------------------------------------------------------------- */
 
 /**
- * Avisa quando os dados exibidos não vêm do Firestore.
+ * Avisa quando os dados exibidos não vêm da API.
  *
  * O repositório degrada para a biblioteca de demonstração quando a leitura
  * falha. Sem este aviso o usuário acreditaria estar vendo a biblioteca real.
@@ -138,11 +138,11 @@ function renderNotices() {
     el('div', { class: 'setup-note' }, [
       el('strong', { text: 'Modo demonstração. ' }),
       el('span', {
-        text: 'O Firebase ainda não está configurado, então o catálogo abaixo usa uma biblioteca de exemplo. ',
+        text: 'A API não respondeu, então o catálogo abaixo usa uma biblioteca de exemplo. ',
       }),
-      el('span', { text: 'Preencha ' }),
-      el('code', { text: 'js/firebase/config.js' }),
-      el('span', { text: ' para conectar a sua biblioteca real.' }),
+      el('span', { text: 'Confira o endereço em ' }),
+      el('code', { text: 'js/core/config.js' }),
+      el('span', { text: ' e se o backend está no ar.' }),
     ]),
   );
 }

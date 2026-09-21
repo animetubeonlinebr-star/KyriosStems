@@ -5,8 +5,8 @@ on:
     branches: [main]
   workflow_dispatch:
 
-# Publica em GitHub Pages mantendo o Firebase separado: o repositório guarda
-# apenas o código, a biblioteca de mídia vive no Firebase Storage.
+# Publica em GitHub Pages. O repositório guarda apenas o código; os metadados
+# vivem no Aiven PostgreSQL e os arquivos no Google Drive, ambos atrás da API.
 
 permissions:
   contents: read
@@ -28,16 +28,11 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Instalar dependências
-        run: npm install --no-audit --no-fund
-
+      # A verificação do frontend não depende de rede: confere imports, classes
+      # de estilo e assets das páginas. Os testes da API exigem banco e Google
+      # Drive configurados, então rodam localmente, não aqui.
       - name: Conferir integridade do projeto
         run: node tests/check-project.js
-
-      - name: Testar as Security Rules
-        run: |
-          npx firebase emulators:exec --only firestore,storage \
-            --project kyriosstems-rules-test "node tests/rules.test.js"
 
   deploy:
     name: Publicar
@@ -49,8 +44,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Publica apenas os arquivos da aplicação. Testes, configuração do
-      # Firebase e documentação não vão para o site.
+      # Publica apenas os arquivos da aplicação. Testes, backend e documentação
+      # não vão para o site.
       - name: Preparar artefato
         run: |
           mkdir -p dist

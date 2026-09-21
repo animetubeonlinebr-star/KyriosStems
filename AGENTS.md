@@ -5,21 +5,40 @@ Conhecimento do repositório para sessões de trabalho futuras.
 ## O que é
 
 KyriosStems: biblioteca pessoal de sessões musicais de louvor prontas para DAW.
-Aplicação **estática** (HTML5 + CSS3 + JavaScript ES Modules, sem build) hospedada
-no GitHub Pages, com Firebase (Auth, Firestore, Storage) como backend.
+Frontend **estático** (HTML5 + CSS3 + JavaScript ES Modules, sem build) no
+GitHub Pages, e um **backend próprio** que guarda os metadados no Aiven
+PostgreSQL e os arquivos no Google Drive.
 
 **Princípio inegociável:** o sistema armazena e organiza sessões prontas; não
 processa áudio. Nada de separação de stems, edição, mixagem ou conversão.
 
+```text
+GitHub Pages (estático)
+        │ HTTPS + token de sessão
+        ▼
+Backend (Node, sem framework)
+        ├──► Aiven PostgreSQL   metadados
+        └──► Google Drive       WAV, ZIP, projeto da DAW
+```
+
 ## Comandos
 
 ```bash
+# Frontend
+npm run serve            # http://localhost:12000
+npm run check            # verificação de integridade (rápida, sem rede)
+
+# Backend (tudo em backend/)
+cd backend
 npm install
-npm run serve          # http://localhost:12000
-npm run check          # verificação de integridade (rápida, sem rede)
-npm run test:rules     # testes das Security Rules no emulador
-npm run deploy:rules   # publica as rules
-npm run admin:grant -- email@exemplo.com
+npm run migrate          # aplica as migrações SQL
+npm run migrate:status   # lista o que falta
+npm run db:check         # testa a conexão com o Aiven
+npm run db:verify        # confere as restrições do banco
+npm run admin:create -- email@exemplo.com
+npm run drive:check      # confere a configuração do Drive
+npm test                 # testes de integração da API
+npm start                # sobe a API em :8080
 ```
 
 ## Estrutura
@@ -28,23 +47,34 @@ npm run admin:grant -- email@exemplo.com
 index.html song.html login.html admin.html
 css/    variables reset global components catalog song admin
 js/
-  core/         constants, dom, format, async
-  firebase/     config, app, auth
+  core/         constants, config, dom, format, async
+  api/          client (HTTP + sessão), auth
   models/       song, daw-session
-  repositories/ firestore-repository, storage-repository
+  repositories/ library-repository, file-repository
   services/     library-service, download-service, publish-service
   components/   app-header, search, filters, song-card, session-card
   pages/        catalog, song, login, admin
   ui/           icons, toast, modal
   data/         demo-data
-tests/    check-project.js, rules.test.js
-docs/     architecture, database, storage, security, workflow
-scripts/  grant-admin.js
-firestore.rules storage.rules firebase.json .firebaserc
+backend/
+  src/
+    config.js env.js
+    auth/       passwords (scrypt), tokens (HMAC)
+    db/         pool, migrate, mappers, songs, sessions, admins
+    drive/      client (API REST do Drive)
+    http/       router, respond, handler
+    lib/        files (classificação e nomes)
+    routes/     auth, songs, drive
+  migrations/   001_init.sql
+  scripts/      create-admin, google-auth, drive-check
+  certs/        aiven-ca.pem
+  tests/        api.test.js
+tests/    check-project.js
+docs/     architecture, database, storage, security, workflow, setup
 ```
 
-Dependências sempre fluem página → serviço → repositório. Uma página nunca fala
-com o Firestore diretamente.
+Dependências sempre fluem página → serviço → repositório → API. Uma página nunca
+fala com a API diretamente.
 
 ## Convenções
 
@@ -55,59 +85,82 @@ com o Firestore diretamente.
   `textContent`; não existe prop de HTML bruto (era vetor de XSS).
 - Toda classe CSS usada pelo JavaScript precisa existir em `css/`. O
   `npm run check` falha se faltar.
-- Toda operação de rede passa por `withTimeout` (`js/core/async.js`).
+- Toda operação de rede passa por `withTimeout` (`js/core/async.js`) e por
+  `request()` (`js/api/client.js`) no frontend.
+- O backend não usa framework. O roteador é próprio; a API tem poucas rotas.
+- Nenhum segredo tem valor padrão no backend: variável ausente derruba a
+  inicialização, em vez de cair para um valor de desenvolvimento.
 
 ## Armadilhas conhecidas
 
-### O Firestore não rejeita leitura offline
+### A validação de conteúdo vive no banco, não na API
 
-Em dispositivo offline, `getDocs` **não rejeita**: repete com backoff. Sem limite
-de tempo a interface fica carregando para sempre. Foi um bug real. Sempre use
-`withTimeout` com os limites de `NETWORK` em `js/core/constants.js`.
+O que as Security Rules do Firestore validavam hoje são restrições `CHECK` em
+`backend/migrations/001_init.sql`. A validação no banco é a última linha de
+defesa: vale mesmo que um erro na API deixe passar um valor inválido. Ao mudar um
+limite, mude os dois lugares e rode `npm run db:verify`, que grava dados
+inválidos e espera erro.
 
-### `node --check` não detecta declaração duplicada
+### Os bytes dos arquivos não passam pela API
 
-Um `createId` declarado duas vezes em `js/core/format.js` quebrava a página
-inteira e passava no `--check`. `npm run check` detecta isso avaliando os
-módulos de verdade. Rode antes de commitar.
+O backend cria a pasta e assina uma URL de envio retomável; o navegador envia
+direto para o Drive. Um pacote de sessão pode ter gigabytes: atravessar a API
+somaria latência e esbarraria no limite de corpo da requisição. Não "simplifique"
+isso fazendo o backend receber o arquivo.
 
-### O atributo `download` é ignorado entre domínios
+### A ordem de exclusão importa
 
-As URLs do Storage vêm de outro domínio, então o navegador pode salvar como
-`session.zip` em vez do nome amigável. Resolver exigiria URL assinada via Cloud
-Function — o que contraria a proposta estática. Documentado em `docs/storage.md`.
+Os arquivos saem do Drive **antes** do registro no banco. Se o Drive falhar, a
+música continua existindo e pode ser tentada de novo; o contrário deixaria
+arquivos órfãos ocupando cota, sem referência para encontrá-los. Por isso a
+exclusão devolve 502 quando o Drive não responde — é o comportamento correto,
+não um bug.
 
 ### A leitura degrada para dados de demonstração
 
-Quando o Firestore falha, o repositório devolve a biblioteca de demonstração
-**junto com o erro**. A interface é obrigada a avisar (`renderNotices`). Nunca
-remova esse aviso: sem ele o usuário acredita estar vendo a biblioteca real.
+Quando a API falha, o repositório devolve a biblioteca de demonstração **junto
+com o erro**. A interface é obrigada a avisar (`renderNotices`). Nunca remova
+esse aviso: sem ele o usuário acredita estar vendo a biblioteca real.
 
-### Ordem de gravação na publicação
+### O TLS do Aiven exige a CA do projeto
 
-`publishSession` grava música → arquivos → sessão. Os arquivos vêm antes de
-registrar a sessão para que uma falha de upload não deixe uma sessão vazia
-apontando para arquivos inexistentes.
+A Project CA do Aiven é autoassinada, então o repositório de CAs do sistema não
+a reconhece. O arquivo `backend/certs/aiven-ca.pem` é **público** (certificado,
+não chave) e precisa ser versionado. Desativar a verificação
+(`rejectUnauthorized: false`) não é alternativa: exporia a senha do banco a um
+intermediário na rede.
+
+### O OAuth do Google Drive precisa de uma conta dedicada
+
+O backend guarda um refresh token e o troca por access token. A conta de serviço
+não serve para uma pasta no "Meu Drive" de uma conta comum: ela não é dona da
+pasta. O cliente OAuth precisa ser do tipo **App para computador** — um cliente
+do tipo "Web" exigiria cadastrar a URI de redirecionamento antes de funcionar.
 
 ## Segurança
 
-- Autorização por custom claim `admin` no token, verificada nas rules.
-- `admin.html` não autoriza ninguém; a verificação no frontend só evita mostrar
-  interface inútil.
-- `js/firebase/config.js` tem a apiKey versionada **de propósito**: chaves do SDK
-  Web são públicas. O que protege são as rules e a restrição de domínio.
-- Nunca versionar `serviceAccount.json` (já no `.gitignore`).
-- As rules validam conteúdo: campos permitidos, obrigatórios, tamanhos e faixas.
+- Autorização decidida pela API, por token de sessão assinado (HMAC-SHA256).
+  A interface só evita mostrar o que não funcionaria.
+- Senha em scrypt, com os parâmetros gravados junto ao hash.
+- Comparação de senha e de assinatura em tempo constante.
+- O login verifica a senha mesmo quando o e-mail não existe, para que o tempo de
+  resposta não revele quais e-mails estão cadastrados.
+- CORS restrito às origens configuradas em `KYRIOS_ALLOWED_ORIGINS`. `*`
+  permitiria que qualquer site usasse a API com as credenciais do usuário.
+- O nome amigável do download é reduzido a um nome de arquivo seguro antes de
+  entrar no `Content-Disposition`: quebra de linha ali permitiria injetar
+  cabeçalhos na resposta.
+- Nunca versionar `backend/.env`. A CA do Aiven **é** versionada, de propósito.
 
 ## Estado atual
 
-MVP completo no código. Falta no console do Firebase:
+Backend e frontend completos no código. Falta configurar:
 
-1. Criar o banco do Firestore (API desabilitada)
-2. Ativar o Storage (bucket não existe)
-3. Ativar Authentication e-mail/senha e criar o usuário
-4. Conceder a custom claim `admin`
-5. Publicar as rules (`npm run deploy:rules`)
+1. `backend/.env` com a senha do Aiven (rotacionada) e um `KYRIOS_JWT_SECRET`
+2. Credencial OAuth (App para computador) e `npm run google-auth`
+3. Pasta raiz no Drive, compartilhada com a conta dedicada
+4. `npm run admin:create` para criar o administrador
+5. Publicar o backend em um host gratuito e apontar `js/core/config.js`
 6. Ativar Pages em Settings > Pages > Source: GitHub Actions
 
 ## Fluxo de trabalho do repositório

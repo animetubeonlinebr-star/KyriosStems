@@ -48,3 +48,13 @@ Thumbs.db
 *.flp
 *.bwproject
 kyriosstems-firebase-adminsdk-*.json
+
+# Backend: variáveis de ambiente e credenciais do Google Drive.
+# A CA do Aiven (backend/certs/aiven-ca.pem) NÃO entra aqui: é certificado
+# público e precisa ser versionado para o backend validar o TLS.
+backend/.env
+backend/.env.*
+!backend/.env.example
+backend/*serviceAccount*.json
+backend/credentials*.json
+backend/node_modules/

@@ -1,25 +1,24 @@
 # Armazenamento
 
-## Estrutura
+## Estrutura no Google Drive
 
 ```text
-sessions/
-└── {songId}/
-    └── {sessionId}/
-        ├── package/
-        │   └── session.zip
-        ├── project/
-        │   └── projeto.rpp
-        ├── audio/
-        │   ├── 01 Drums.wav
-        │   └── 02 Bass.wav
-        └── aux/
-            └── README.txt
+{pasta raiz do KyriosStems}/
+└── session_{sessionId}/
+    ├── session.zip
+    ├── projeto.rpp
+    ├── 01 Drums.wav
+    └── README.txt
 ```
 
-A pasta é derivada da extensão do arquivo, conforme `EXTENSION_CATEGORY` em
-`js/core/constants.js`. Não há escolha manual de categoria: a extensão já diz o
-que o arquivo é.
+A pasta da sessão é criada sob a pasta raiz configurada em
+`KYRIOS_DRIVE_FOLDER_ID`. A pasta é reaproveitada se já existir: o Drive aceita
+nomes repetidos, então sem a busca cada publicação criaria uma pasta nova com o
+mesmo nome.
+
+A categoria de cada arquivo é derivada da extensão, conforme
+`EXTENSION_CATEGORY` em `js/core/constants.js`. Não há escolha manual: a extensão
+já diz o que o arquivo é.
 
 | Categoria | Extensões |
 |---|---|
@@ -31,83 +30,90 @@ que o arquivo é.
 ## O pacote principal
 
 O ZIP é sempre gravado como `session.zip`, mesmo que o arquivo escolhido tenha
-outro nome. Isso mantém o caminho estável e evita que títulos musicais virem
-caminho de arquivo.
+outro nome. Isso mantém o nome estável e evita que títulos musicais virem nome de
+arquivo.
 
 Quando há mais de um ZIP no envio, o maior é tratado como pacote principal e os
 demais vão para `aux`. O usuário não precisa decidir qual é o pacote.
 
-O nome amigável do download (`Vim Para Adorar-te - REAPER - v2.zip`) é montado
-no momento do download por `packageFileName`.
-
-## Estrutura interna do pacote
-
-O ZIP preserva a estrutura que a DAW espera encontrar:
-
-```text
-Vim Para Adorar-te/
-├── Project/
-│   └── Vim Para Adorar-te.rpp
-├── Audio/
-│   ├── 01 Drums.wav
-│   ├── 02 Bass.wav
-│   └── 03 Guitar.wav
-└── README.txt
-```
-
-O KyriosStems **não interpreta** o conteúdo do projeto. Ele armazena e devolve o
-arquivo como recebido. Por isso o campo `path` de cada arquivo guarda o caminho
-relativo dentro do pacote, separado do `storagePath`.
-
 ## Envio
 
+Os bytes **não passam pela API**. Um pacote de sessão pode ter gigabytes;
+atravessar a API somaria latência, consumiria memória do processo e esbarraria no
+limite de corpo da requisição.
+
 ```text
-Arquivo escolhido
-      │
-      ▼
-Classificação por extensão
-      │
-      ▼
-uploadBytesResumable (sequencial)
-      │
-      ▼
-URL de download + registro no Firestore
+Navegador                     Backend                  Google Drive
+    │                            │                          │
+    │ POST /api/drive/prepare    │                          │
+    ├───────────────────────────►│                          │
+    │                            │ cria a pasta da sessão   │
+    │                            ├─────────────────────────►│
+    │                            │ assina URL de envio      │
+    │◄───────────────────────────┤                          │
+    │ { folderId, uploads[] }    │                          │
+    │                                                       │
+    │ PUT no uploadUrl (bytes direto, retomável)            │
+    ├──────────────────────────────────────────────────────►│
+    │◄──────────────────────────────────────────────────────┤
+    │ { id }                                                │
+    │                                                       │
+    │ POST /api/sessions (com os ids do Drive)              │
+    ├───────────────────────────►│                          │
 ```
 
 O envio é sequencial, não paralelo. Isso evita saturar a conexão do usuário e
 mantém a barra de progresso coerente.
 
-O limite é de 2 GiB por arquivo (`UPLOAD_LIMITS.maxFileBytes`), o mesmo valor
-verificado em `storage.rules`.
+O frontend usa `XMLHttpRequest` em vez de `fetch` porque só o XHR informa
+progresso de envio. Sem isso a barra ficaria parada durante todo o upload de um
+pacote grande — justamente quando o usuário mais precisa de retorno.
+
+O limite é de 2 GiB por arquivo (`UPLOAD_LIMITS.maxFileBytes`), verificado antes
+do envio.
 
 ## Download
 
 O download do pacote completo é o fluxo principal:
 
 1. `preparePackageDownload` valida que existe pacote
-2. `resolvePackageUrl` obtém a URL do Storage
-3. `startDownload` dispara o download com o nome amigável
+2. a API resolve a URL do arquivo e o nome amigável
+3. `startDownload` dispara o download
 
 Os arquivos individuais são um extra opcional e só aparecem se tiverem sido
 catalogados na publicação.
 
 ### Nome do arquivo no download
 
-O atributo `download` é ignorado em URLs de origem cruzada, e as URLs do
-Firebase Storage vêm de outro domínio. Na prática, o navegador pode salvar com o
-nome do objeto no Storage (`session.zip`) em vez do nome amigável. Nesse caso o
-nome ainda deixa claro o que é, e o conteúdo é o correto.
+A pasta no Drive é privada e os bytes são entregues pelo backend, que aplica o
+nome amigável no cabeçalho `Content-Disposition`. Isso resolve a limitação que
+existia no Firebase Storage, onde o atributo `download` era ignorado entre
+domínios e o navegador salvava como `session.zip`.
 
-Para forçar o nome exato, seria necessário gerar uma URL assinada com
-`response-content-disposition` via Cloud Function — o que introduziria um
-componente de servidor, contrariando a proposta estática do projeto.
+O nome vem por parâmetro na URL e é reduzido a um nome de arquivo seguro antes de
+entrar no cabeçalho: uma quebra de linha ali permitiria injetar cabeçalhos na
+resposta.
+
+O backend também repassa `Content-Length`, `Content-Range` e `Accept-Ranges`,
+para que um download grande interrompido continue de onde parou em vez de
+recomeçar.
+
+## Cota
+
+Os arquivos ocupam o espaço da conta Google que hospeda a biblioteca. A cota
+gratuita é compartilhada com o resto do Drive, então o valor exibido no painel
+(`STORAGE_QUOTA_BYTES`) é ordem de grandeza, não medição.
 
 ## Limpeza
 
 | Ação | Efeito |
 |---|---|
-| Excluir sessão | Remove os arquivos da sessão e o documento |
+| Excluir sessão | Remove os arquivos e a pasta da sessão, depois o registro |
 | Excluir música | Remove todas as sessões e todos os arquivos |
 
-A remoção no Storage acontece antes da remoção do documento, para que uma falha
-não deixe arquivos órfãos ocupando espaço sem referência.
+A remoção no Drive acontece **antes** da remoção do registro. Se o Drive falhar,
+a música continua existindo e pode ser tentada de novo; o contrário deixaria
+arquivos órfãos ocupando cota, sem referência para encontrá-los depois.
+
+Quando o Drive não responde, a exclusão devolve erro e não remove nada. É o
+comportamento correto, não uma falha.

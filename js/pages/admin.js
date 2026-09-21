@@ -2,8 +2,8 @@
  * KyriosStems - js/pages/admin.js
  * Painel administrativo: dashboard, biblioteca e cadastro em etapas.
  *
- * O acesso é decidido pelas Security Rules. A verificação daqui serve para não
- * apresentar uma interface que não funcionaria — não é ela que protege os dados.
+ * O acesso é decidido pela API. A verificação daqui serve para não apresentar
+ * uma interface que não funcionaria — não é ela que protege os dados.
  */
 
 import { $, clear, el, mount, ready } from '../core/dom.js';
@@ -32,7 +32,7 @@ import {
   removeSong,
   ValidationError,
 } from '../services/publish-service.js';
-import { requireAdmin, signOut } from '../firebase/auth.js';
+import { requireAdmin, signOut } from '../api/auth.js';
 import { icon } from '../ui/icons.js';
 import { confirmDialog } from '../ui/modal.js';
 import { notifyError, notifyInfo, notifySuccess } from '../ui/toast.js';
@@ -119,12 +119,12 @@ function renderShell() {
     ]),
     el('div', { class: 'admin-statusbar' }, [
       el('span', {}, [
-        dot('data-status-firestore'),
-        el('span', { 'data-status-firestore-text': true, text: 'Firestore: verificando' }),
+        dot('data-status-api'),
+        el('span', { 'data-status-api-text': true, text: 'API: verificando' }),
       ]),
       el('span', {}, [
         dot('data-status-storage'),
-        el('span', { 'data-status-storage-text': true, text: 'Storage: verificando' }),
+        el('span', { 'data-status-storage-text': true, text: 'Drive: verificando' }),
       ]),
     ]),
   ]);
@@ -219,19 +219,19 @@ async function refreshLibrary() {
 function updateStatusBar() {
   const { isDemo, error, sessions } = state.library;
 
-  const dot = document.querySelector('[data-status-firestore]');
-  const text = document.querySelector('[data-status-firestore-text]');
+  const dot = document.querySelector('[data-status-api]');
+  const text = document.querySelector('[data-status-api-text]');
   const connected = !isDemo;
 
   dot?.classList.toggle('admin-statusbar__dot--on', connected);
   dot?.classList.toggle('admin-statusbar__dot--off', !connected);
   if (text) {
     text.textContent = connected
-      ? 'Firestore: conectado'
-      : `Firestore: ${error ? 'falha na leitura' : 'não configurado'}`;
+      ? 'API: conectada'
+      : `API: ${error ? 'falha na leitura' : 'não configurada'}`;
   }
 
-  const withPackage = sessions.filter((session) => Boolean(session.packagePath)).length;
+  const withPackage = sessions.filter((session) => Boolean(session.packageFileId)).length;
   const storageDot = document.querySelector('[data-status-storage]');
   const storageText = document.querySelector('[data-status-storage-text]');
 
@@ -239,8 +239,8 @@ function updateStatusBar() {
   storageDot?.classList.toggle('admin-statusbar__dot--off', !isDemo && withPackage === 0);
   if (storageText) {
     storageText.textContent = withPackage
-      ? `Storage: ${withPackage} pacote(s)`
-      : 'Storage: sem pacotes';
+      ? `Drive: ${withPackage} pacote(s)`
+      : 'Drive: sem pacotes';
   }
 }
 
@@ -275,7 +275,7 @@ function stat(label, value, accent = false) {
   ]);
 }
 
-/** Ocupação do Storage, com a cota do plano gratuito como referência. */
+/** Ocupação dos pacotes, para referência no painel. */
 function storageCard(stats) {
   const percent = Math.min(Math.round((stats.bytes / STORAGE_QUOTA_BYTES) * 100), 100);
 
@@ -469,7 +469,7 @@ async function handleDeleteSong(song) {
 
   const confirmed = await confirmDialog({
     title: 'Excluir música',
-    message: `"${song.title}" será removida junto com ${sessions.length} sessão(ões) e todos os arquivos no Storage. Esta ação não pode ser desfeita.`,
+    message: `"${song.title}" será removida junto com ${sessions.length} sessão(ões) e todos os arquivos no Google Drive. Esta ação não pode ser desfeita.`,
     confirmLabel: 'Excluir definitivamente',
     danger: true,
   });
