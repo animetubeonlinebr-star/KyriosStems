@@ -9,10 +9,6 @@ build/
 *.local
 *.local.js
 
-# Endereço local da API. Criado à mão para apontar o frontend a um backend
-# local; em produção o endereço fica em js/core/config.js.
-js/core/config.local.js
-
 # Credenciais de serviço: concedem acesso administrativo ao backend.
 # Mantenha apenas na sua máquina.
 serviceAccount.json

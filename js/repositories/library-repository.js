@@ -14,7 +14,7 @@
  * escreve e um erro silencioso aqui seria destrutivo.
  */
 
-import { get, post, patch, del } from '../api/client.js';
+import { get, post, patch, del, API_NOT_CONFIGURED } from '../api/client.js';
 import { demoLibrary } from '../data/demo-data.js';
 import * as Song from '../models/song.js';
 import * as DawSession from '../models/daw-session.js';
@@ -49,45 +49,34 @@ export async function fetchLibrary() {
   }
 }
 
-/** Lê todas as músicas. Mantido para compatibilidade com o serviço. */
-export async function fetchSongs() {
-  const result = await fetchLibrary();
-  return { items: result.songs, source: result.source, error: result.error };
-}
-
-/** Lê todas as sessões. */
-export async function fetchSessions() {
-  const result = await fetchLibrary();
-  return { items: result.sessions, source: result.source, error: result.error };
-}
-
-/** Lê uma música pelo id. */
-export async function fetchSong(songId) {
+/**
+ * Lê uma música e suas sessões em uma única requisição.
+ *
+ * A rota já devolve as duas coisas, então pedir música e sessões em chamadas
+ * separadas dobraria o tráfego por página — a biblioteca inteira era baixada
+ * duas vezes no catálogo.
+ */
+export async function fetchSongDetail(songId) {
   try {
     const data = await get(`/api/songs/${encodeURIComponent(songId)}`);
     return {
-      item: Song.fromDocument(data.song.id, data.song),
+      song: Song.fromDocument(data.song.id, data.song),
+      sessions: (data.sessions ?? []).map((row) => DawSession.fromDocument(row.id, row)),
       source: SOURCE.api,
       error: null,
     };
   } catch (error) {
+    // 404 é resposta legítima: a música não existe. Não é degradação.
     if (error?.status === 404) {
-      return { item: null, source: SOURCE.api, error: null };
+      return { song: null, sessions: [], source: SOURCE.api, error: null };
     }
-    const demo = demoLibrary().find((entry) => entry.song.id === songId)?.song ?? null;
-    return { item: demo, source: SOURCE.demo, error: describe(error) };
-  }
-}
-
-/** Lê as sessões de uma música. */
-export async function fetchSessionsBySong(songId) {
-  try {
-    const data = await get(`/api/songs/${encodeURIComponent(songId)}`);
-    const sessions = (data.sessions ?? []).map((row) => DawSession.fromDocument(row.id, row));
-    return { items: sessions, source: SOURCE.api, error: null };
-  } catch (error) {
-    const demo = demoLibrary().find((entry) => entry.song.id === songId)?.sessions ?? [];
-    return { items: demo, source: SOURCE.demo, error: describe(error) };
+    const entry = demoLibrary().find((item) => item.song.id === songId);
+    return {
+      song: entry?.song ?? null,
+      sessions: entry?.sessions ?? [],
+      source: SOURCE.demo,
+      error: describe(error),
+    };
   }
 }
 
@@ -150,7 +139,10 @@ function demoSessions() {
 
 /** Traduz erros da API em mensagens acionáveis. */
 function describe(error) {
-  if (error?.status === 0 || /Failed to fetch|NetworkError/i.test(error?.message || '')) {
+  // "Não configurado" não é falha de rede: a requisição nem saiu. A mensagem
+  // original já diz o que fazer, então é preservada.
+  if (error?.status !== API_NOT_CONFIGURED
+      && (error?.status === 0 || /Failed to fetch|NetworkError/i.test(error?.message || ''))) {
     return 'Não foi possível falar com a API. Verifique se o backend está no ar e se o endereço em js/core/config.js está correto.';
   }
   if (error?.status === 403) {

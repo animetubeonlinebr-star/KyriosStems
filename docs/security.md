@@ -122,7 +122,6 @@ Nunca versionar:
 | Arquivo | Motivo |
 |---|---|
 | `backend/.env` | Senha do banco, segredo do token, refresh token do Drive |
-| `js/core/config.local.js` | Sobreposições locais |
 | `.env`, `.env.*` | Variáveis de ambiente |
 
 O `.gitignore` cobre esses caminhos.

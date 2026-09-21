@@ -12,7 +12,7 @@
  * por HTML bruto, não há superfície de XSS conhecida.
  */
 
-import { apiUrl } from '../core/config.js';
+import { apiUrl, apiBaseUrl, apiConfigured } from '../core/config.js';
 import { withTimeout } from '../core/async.js';
 import { NETWORK } from '../core/constants.js';
 
@@ -82,6 +82,15 @@ export class ApiError extends Error {
 }
 
 /**
+ * Status de "endereço da API não configurado".
+ *
+ * Não é um status HTTP: nenhuma requisição chega a sair. Existe para que a
+ * interface distinga "não configurado" de "fora do ar", que pedem ações
+ * diferentes do usuário.
+ */
+export const API_NOT_CONFIGURED = 'not-configured';
+
+/**
  * Executa uma requisição à API.
  *
  * @param {string} path
@@ -89,6 +98,17 @@ export class ApiError extends Error {
  */
 export async function request(path, options = {}) {
   const { method = 'GET', body, auth = false, timeoutMs = NETWORK.apiTimeoutMs } = options;
+
+  // Sem endereço público configurado, o padrão é o backend de desenvolvimento.
+  // Fora do localhost esse endereço não existe, e tentar alcançá-lo produziria
+  // ERR_CONNECTION_REFUSED no console de quem visita o site publicado.
+  if (!apiConfigured) {
+    throw new ApiError(
+      `A API não está configurada. Aponte js/core/config.js para o backend (o padrão atual é ${apiBaseUrl}).`,
+      API_NOT_CONFIGURED,
+      null,
+    );
+  }
 
   const headers = {};
   if (body !== undefined) headers['Content-Type'] = 'application/json';

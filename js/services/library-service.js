@@ -7,10 +7,9 @@
  */
 
 import {
-  fetchSongs,
-  fetchSessions,
-  fetchSong,
-  fetchSessionsBySong,
+  fetchLibrary,
+  fetchSongDetail,
+  SOURCE,
 } from '../repositories/library-repository.js';
 import { groupByDaw, markCurrentVersions, byDawThenVersion } from '../models/daw-session.js';
 import { compareText, normalizeText, unique } from '../core/format.js';
@@ -31,39 +30,39 @@ import { byTitle, searchIndex as songSearchIndex } from '../models/song.js';
  * `isDemo` e `error` permitem à interface avisar que os dados não são reais.
  */
 export async function loadLibrary() {
-  const [songsResult, sessionsResult] = await Promise.all([fetchSongs(), fetchSessions()]);
+  // Uma única leitura: a rota devolve músicas e sessões juntas. Pedir as duas
+  // em chamadas separadas baixava a biblioteca inteira duas vezes.
+  const result = await fetchLibrary();
 
   const sessionsBySong = new Map();
-  for (const session of sessionsResult.items) {
+  for (const session of result.sessions) {
     if (!sessionsBySong.has(session.songId)) sessionsBySong.set(session.songId, []);
     sessionsBySong.get(session.songId).push(session);
   }
 
   return {
-    songs: [...songsResult.items].sort(byTitle),
-    sessions: sessionsResult.items,
+    songs: [...result.songs].sort(byTitle),
+    sessions: result.sessions,
     sessionsBySong,
-    isDemo: isDemo(songsResult, sessionsResult),
-    error: songsResult.error || sessionsResult.error,
-    facets: buildFacets(songsResult.items, sessionsResult.items),
+    isDemo: result.source === SOURCE.demo,
+    error: result.error,
+    facets: buildFacets(result.songs, result.sessions),
   };
 }
 
 /** Carrega uma música e suas sessões, com as versões atuais já marcadas. */
 export async function loadSongDetail(songId) {
-  const [songResult, sessionsResult] = await Promise.all([
-    fetchSong(songId),
-    fetchSessionsBySong(songId),
-  ]);
+  // Mesma razão: a rota de detalhe já traz música e sessões.
+  const result = await fetchSongDetail(songId);
 
-  const sessions = markCurrentVersions([...sessionsResult.items].sort(byDawThenVersion));
+  const sessions = markCurrentVersions([...result.sessions].sort(byDawThenVersion));
 
   return {
-    song: songResult.item,
+    song: result.song,
     sessions: sessions.sort(byDawThenVersion),
     byDaw: groupByDaw(sessions),
-    isDemo: isDemo(songResult, sessionsResult),
-    error: songResult.error || sessionsResult.error,
+    isDemo: result.source === SOURCE.demo,
+    error: result.error,
   };
 }
 
@@ -94,8 +93,4 @@ export function statistics(songs, sessions) {
     packages: sessions.filter((session) => Boolean(session.packageFileId)).length,
     bytes: sessions.reduce((sum, session) => sum + (Number(session.packageSize) || 0), 0),
   };
-}
-
-function isDemo(...results) {
-  return results.some((result) => result.source === 'demo');
 }

@@ -150,14 +150,10 @@ npm run serve
 
 Abra `http://localhost:12000`.
 
-O frontend aponta para `http://localhost:8080` por padrão. Para apontar para
-outro endereço em desenvolvimento, crie `js/core/config.local.js`:
-
-```js
-export const apiBaseUrl = 'http://localhost:8080';
-```
-
-Esse arquivo não é versionado.
+Em `localhost` o frontend aponta para `http://localhost:8080`, onde o backend de
+desenvolvimento escuta. Não há arquivo de sobreposição: o endereço vem de
+`js/core/config.js`, que escolhe `DEVELOPMENT_API` em localhost e
+`PRODUCTION_API` fora dele.
 
 ---
 
@@ -181,11 +177,16 @@ O host precisa permitir conexão de saída na porta 25580 (Aiven) e para
 
 ### 5.2 Frontend
 
-Edite `js/core/config.js` com o endereço público do backend:
+Em `js/core/config.js`, preencha `PRODUCTION_API` com o endereço público do
+backend:
 
 ```js
-export const apiBaseUrl = 'https://seu-backend.exemplo.com';
+const PRODUCTION_API = 'https://seu-backend.exemplo.com';
 ```
+
+Enquanto `PRODUCTION_API` estiver vazio, o site publicado avisa que a API não
+está configurada e exibe a biblioteca de demonstração, em vez de tentar um
+endereço local que não existe na máquina do visitante.
 
 Depois, no GitHub, em *Settings > Pages > Source*, escolha **GitHub Actions**. O
 workflow publica a cada push na `main`.

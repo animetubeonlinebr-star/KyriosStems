@@ -50,7 +50,6 @@ jobs:
         run: |
           mkdir -p dist
           cp -r index.html song.html login.html admin.html css js assets dist/
-          find dist -name '*.local.js' -delete
 
       - uses: actions/configure-pages@v5
 
