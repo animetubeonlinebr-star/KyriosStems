@@ -7,18 +7,18 @@ build/
 .env
 .env.*
 *.local
+*.local.js
 
-# Configuração real do Firebase (nunca versionar credenciais de produção).
-# Mantenha js/firebase/config.js com valores de exemplo no repositório.
-js/firebase/config.local.js
+# Endereço local da API. Criado à mão para apontar o frontend a um backend
+# local; em produção o endereço fica em js/core/config.js.
+js/core/config.local.js
 
-# Chave privada do SDK Admin: concede acesso total ao projeto.
-# Gere no console do Firebase e mantenha apenas na sua máquina.
+# Credenciais de serviço: concedem acesso administrativo ao backend.
+# Mantenha apenas na sua máquina.
 serviceAccount.json
 *serviceAccount*.json
 
-# Cache e logs dos emuladores do Firebase
-.firebase/
+# Cache e logs
 *-debug.log
 
 # Cache e temporários do agente
@@ -32,7 +32,7 @@ Thumbs.db
 *~
 
 # Áudio e pacotes de sessão NUNCA pertencem ao Git.
-# A biblioteca de mídia vive no Firebase Storage.
+# A biblioteca de mídia vive no Google Drive, atrás da API.
 *.wav
 *.aif
 *.aiff
