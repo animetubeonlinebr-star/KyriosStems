@@ -16,7 +16,17 @@ const MOTIVES = {
 ready(init);
 
 async function init() {
-  renderShell();
+  // O formulário vive no HTML, para que a página tenha conteúdo mesmo se o
+  // módulo não carregar. Aqui só ligamos o comportamento.
+  const form = $('[data-login-form]');
+
+  if (form) {
+    wireForm(form);
+  } else {
+    // Fallback: HTML sem o formulário pré-renderizado.
+    renderShell();
+    wireForm($('[data-login-form]'));
+  }
 
   // Quem já tem sessão válida não precisa ver o formulário. A confirmação é
   // feita contra a API: guardar o token no navegador não prova que ele vale.
@@ -29,6 +39,21 @@ async function init() {
   }
 
   showMotive(queryParams().get('motivo'));
+}
+
+/** Liga o envio do formulário aos campos existentes. */
+function wireForm(form) {
+  if (!form) return;
+
+  const emailInput = $('#email', form);
+  const passwordInput = $('#password', form);
+  const submitButton = $('[data-login-submit]', form);
+  const feedback = $('[data-feedback]', form);
+
+  form.addEventListener('submit', (event) => {
+    event.preventDefault();
+    submit(emailInput.value, passwordInput.value, submitButton, feedback);
+  });
 }
 
 function renderShell() {
@@ -58,22 +83,17 @@ function loginCard() {
 
   const submitButton = el(
     'button',
-    { type: 'submit', class: 'btn btn--primary btn--block' },
+    { type: 'submit', class: 'btn btn--primary btn--block', 'data-login-submit': true },
     ['Entrar no painel'],
   );
 
   const feedback = el('div', { 'data-feedback': true, role: 'alert' });
-  const form = el('form', { class: 'login-card__form', novalidate: true }, [
+  const form = el('form', { class: 'login-card__form', 'data-login-form': true, novalidate: true }, [
     field('E-mail', emailInput),
     field('Senha', passwordInput),
     submitButton,
     feedback,
   ]);
-
-  form.addEventListener('submit', (event) => {
-    event.preventDefault();
-    submit(emailInput.value, passwordInput.value, submitButton, feedback);
-  });
 
   return el('div', { class: 'login-card' }, [
     el('div', { class: 'login-card__brand' }, [

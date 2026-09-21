@@ -3,7 +3,7 @@
  * Página da música: informações musicais, sessões por DAW e download do pacote.
  */
 
-import { $, clear, el, mount, ready, setText, queryParams } from '../core/dom.js';
+import { $, clear, el, mount, ready, queryParams } from '../core/dom.js';
 import { QUERY, ROUTES, FILE_CATEGORY_LABELS } from '../core/constants.js';
 import {
   formatBytes,
@@ -358,9 +358,10 @@ function renderNotFound(message) {
   const header = $('[data-song-header]');
   const sessions = $('[data-sessions]');
   const primary = $('[data-primary-download]');
-  setText($('[data-results-bar]'), '');
+  const notices = $('[data-notices]');
 
   if (primary) clear(primary);
+  if (notices) clear(notices);
   if (header) clear(header);
   if (sessions) {
     mount(sessions, el('div', { class: 'empty-state' }, [

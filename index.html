@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>KyriosStems — Personal Worship Multitrack Library</title>
   <meta name="description" content="Biblioteca pessoal de sessões musicais de louvor preparadas para utilização em DAWs.">
-  <meta name="theme-color" content="#F3F4F6">
-  <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#0d1114">
+  <meta name="color-scheme" content="dark">
 
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 
@@ -34,7 +34,12 @@
       <div data-notices></div>
       <div data-toolbar></div>
       <div class="results-bar" data-results-bar role="status" aria-live="polite"></div>
-      <div data-results></div>
+      <div data-results>
+        <div class="loading-state">
+          <div class="spinner" aria-hidden="true"></div>
+          <span>Carregando biblioteca...</span>
+        </div>
+      </div>
     </div>
   </main>
 
@@ -44,7 +49,7 @@
   <noscript>
     <div class="container">
       <p class="alert alert--error mt-6">
-        O KyriosStems depende de JavaScript para carregar o catálogo.
+        O KyriosStems depende de JavaScript para carregar o catálogo. Ative-o para ver a biblioteca.
       </p>
     </div>
   </noscript>

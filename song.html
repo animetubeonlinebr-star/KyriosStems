@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Música — KyriosStems</title>
   <meta name="description" content="Informações da música e sessões disponíveis para download em pacote completo.">
-  <meta name="theme-color" content="#F3F4F6">
-  <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#0d1114">
+  <meta name="color-scheme" content="dark">
 
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 
@@ -29,12 +29,23 @@
 
   <main class="page__main" id="conteudo">
     <div class="container">
-      <div class="song-header" data-song-header></div>
+      <div class="song-header" data-song-header>
+        <nav class="song-header__breadcrumb" aria-label="Trilha de navegação">
+          <a href="index.html">Catálogo</a>
+          <span>/</span>
+          <span>Carregando…</span>
+        </nav>
+      </div>
       <div data-notices></div>
       <div data-primary-download></div>
 
       <h2 class="section-title">Sessões</h2>
-      <div class="session-list mt-4" data-sessions></div>
+      <div class="session-list mt-4" data-sessions>
+        <div class="loading-state">
+          <div class="spinner" aria-hidden="true"></div>
+          <span>Carregando sessões...</span>
+        </div>
+      </div>
     </div>
   </main>
 
@@ -44,7 +55,7 @@
   <noscript>
     <div class="container">
       <p class="alert alert--error mt-6">
-        O KyriosStems depende de JavaScript para carregar as sessões.
+        O KyriosStems depende de JavaScript para carregar as sessões. Ative-o para ver a música.
       </p>
     </div>
   </noscript>
