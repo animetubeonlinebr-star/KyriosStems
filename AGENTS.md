@@ -154,16 +154,40 @@ do tipo "Web" exigiria cadastrar a URI de redirecionamento antes de funcionar.
 
 ## Estado atual
 
-Backend e frontend completos no código. Falta configurar:
+Frontend, backend e publicação no Pages prontos. O site está no ar em
+`https://animetubeonlinebr-star.github.io/KyriosStems/` (Pages ativo, build por
+GitHub Actions). Falta configurar as contas:
 
 1. `backend/.env` com a senha do Aiven (rotacionada) e um `KYRIOS_JWT_SECRET`
 2. Credencial OAuth (App para computador) e `npm run google-auth`
 3. Pasta raiz no Drive, compartilhada com a conta dedicada
 4. `npm run admin:create` para criar o administrador
 5. Publicar o backend em um host gratuito e apontar `js/core/config.js`
-6. Ativar Pages em Settings > Pages > Source: GitHub Actions
+
+Enquanto o passo 5 não acontecer, `js/core/config.js` aponta para
+`http://localhost:8080` e o site publicado cai no modo demonstração. Não é bug:
+o frontend não tem para onde falar. O mesmo vale para `KYRIOS_ALLOWED_ORIGINS`,
+que precisa incluir o domínio do Pages além do localhost.
+
+## Testar o backend sem o Aiven
+
+`npm test` exige banco real e credenciais do Drive. Para rodar tudo localmente
+sem tocar em produção, suba um PostgreSQL com TLS:
+
+- O pool sempre exige `ssl.ca` com verificação (`backend/src/db/pool.js`), então
+  o servidor precisa de certificado próprio. Gere uma CA local, sirva
+  `server.crt`/`server.key` no contêiner e aponte `KYRIOS_DB_CA_PATH` para a CA
+  local no `.env`.
+- Os testes criam dados `test_%` e os removem no fim; o Drive é simulado, e as
+  credenciais do Drive podem ser valores quaisquer em `test:api`.
+
+Verificado nesta base: 37 casos em `api.test.js` e 28 em `drive-flow.test.js`,
+todos passando, e `db:verify` recusando os 13 casos inválidos.
 
 ## Fluxo de trabalho do repositório
 
 Um push por etapa concluída. Mensagens de commit descritivas, em português,
 explicando o porquê e não apenas o quê.
+
+Pull requests: branch com o trabalho, PR para `main`, merge só depois de revisar.
+O PR #1 (`backend-aiven-drive`) foi mergeado assim.
