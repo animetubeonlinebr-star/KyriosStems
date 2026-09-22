@@ -112,10 +112,27 @@ function renderNotices() {
   const mountPoint = $('[data-notices]');
   if (!mountPoint) return;
 
-  const { isDemo, error } = state.library;
+  const { isDemo, error, notConfigured } = state.library;
   clear(mountPoint);
 
   if (!isDemo) return;
+
+  // API não configurada não se resolve sozinha: exige mudar o endereço. Por
+  // isso o aviso é distinto do de falha temporária, que sugere tentar de novo.
+  if (notConfigured) {
+    mountPoint.append(
+      el('div', { class: 'setup-note', role: 'alert' }, [
+        el('strong', { text: 'A API ainda não foi configurada. ' }),
+        el('span', { text: 'O catálogo abaixo usa uma biblioteca de exemplo. ' }),
+        el('span', { text: 'Para exibir a biblioteca real, defina ' }),
+        el('code', { text: 'PRODUCTION_API' }),
+        el('span', { text: ' em ' }),
+        el('code', { text: 'js/core/config.js' }),
+        el('span', { text: ' com o endereço do backend publicado.' }),
+      ]),
+    );
+    return;
+  }
 
   if (error) {
     mountPoint.append(

@@ -46,6 +46,7 @@ export async function loadLibrary() {
     sessionsBySong,
     isDemo: result.source === SOURCE.demo,
     error: result.error,
+    notConfigured: result.notConfigured,
     facets: buildFacets(result.songs, result.sessions),
   };
 }
@@ -63,6 +64,7 @@ export async function loadSongDetail(songId) {
     byDaw: groupByDaw(sessions),
     isDemo: result.source === SOURCE.demo,
     error: result.error,
+    notConfigured: result.notConfigured,
   };
 }
 

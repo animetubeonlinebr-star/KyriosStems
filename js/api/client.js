@@ -12,7 +12,7 @@
  * por HTML bruto, não há superfície de XSS conhecida.
  */
 
-import { apiUrl, apiBaseUrl, apiConfigured } from '../core/config.js';
+import { apiUrl, apiConfigured } from '../core/config.js';
 import { withTimeout } from '../core/async.js';
 import { NETWORK } from '../core/constants.js';
 
@@ -104,7 +104,7 @@ export async function request(path, options = {}) {
   // ERR_CONNECTION_REFUSED no console de quem visita o site publicado.
   if (!apiConfigured) {
     throw new ApiError(
-      `A API não está configurada. Aponte js/core/config.js para o backend (o padrão atual é ${apiBaseUrl}).`,
+      'A API não está configurada. Defina PRODUCTION_API em js/core/config.js com o endereço do backend publicado.',
       API_NOT_CONFIGURED,
       null,
     );

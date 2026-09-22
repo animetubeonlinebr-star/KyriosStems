@@ -69,6 +69,21 @@ function renderNotices(detail) {
   const mountPoint = $('[data-notices]');
   if (!mountPoint || !detail.isDemo) return;
 
+  if (detail.notConfigured) {
+    clear(mountPoint).append(
+      el('div', { class: 'setup-note', role: 'alert' }, [
+        el('strong', { text: 'A API ainda não foi configurada. ' }),
+        el('span', { text: 'Os dados abaixo são de exemplo. ' }),
+        el('span', { text: 'Para exibir a biblioteca real, defina ' }),
+        el('code', { text: 'PRODUCTION_API' }),
+        el('span', { text: ' em ' }),
+        el('code', { text: 'js/core/config.js' }),
+        el('span', { text: '.' }),
+      ]),
+    );
+    return;
+  }
+
   clear(mountPoint).append(
     el('div', { class: 'alert alert--error', role: 'alert' }, [
       icon('alert', { size: 16 }),

@@ -38,6 +38,7 @@ export async function fetchLibrary() {
       sessions: (data.sessions ?? []).map((row) => DawSession.fromDocument(row.id, row)),
       source: SOURCE.api,
       error: null,
+      notConfigured: false,
     };
   } catch (error) {
     return {
@@ -45,6 +46,7 @@ export async function fetchLibrary() {
       sessions: demoSessions(),
       source: SOURCE.demo,
       error: describe(error),
+      notConfigured: error?.status === API_NOT_CONFIGURED,
     };
   }
 }
@@ -64,11 +66,12 @@ export async function fetchSongDetail(songId) {
       sessions: (data.sessions ?? []).map((row) => DawSession.fromDocument(row.id, row)),
       source: SOURCE.api,
       error: null,
+      notConfigured: false,
     };
   } catch (error) {
     // 404 é resposta legítima: a música não existe. Não é degradação.
     if (error?.status === 404) {
-      return { song: null, sessions: [], source: SOURCE.api, error: null };
+      return { song: null, sessions: [], source: SOURCE.api, error: null, notConfigured: false };
     }
     const entry = demoLibrary().find((item) => item.song.id === songId);
     return {
@@ -76,6 +79,7 @@ export async function fetchSongDetail(songId) {
       sessions: entry?.sessions ?? [],
       source: SOURCE.demo,
       error: describe(error),
+      notConfigured: error?.status === API_NOT_CONFIGURED,
     };
   }
 }
