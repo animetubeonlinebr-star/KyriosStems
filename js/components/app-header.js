@@ -12,16 +12,8 @@ import { APP, ROUTES } from '../core/constants.js';
 import { icon } from '../ui/icons.js';
 
 /** Itens de navegação, na ordem em que aparecem. */
-function navigationItems(adminHref) {
-  return [
-    { key: 'catalog', label: 'Catálogo', href: ROUTES.catalog, icon: 'library' },
-    {
-      key: 'admin',
-      label: adminHref ? 'Painel' : 'Entrar',
-      href: adminHref || ROUTES.login,
-      icon: 'dashboard',
-    },
-  ];
+function navigationItems() {
+  return [{ key: 'catalog', label: 'Catálogo', href: ROUTES.catalog, icon: 'library' }];
 }
 
 /** A página da música pertence ao catálogo na navegação. */

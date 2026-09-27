@@ -31,7 +31,7 @@ export function formatDuration(seconds) {
   return `${minutes}:${String(secs).padStart(2, '0')}`;
 }
 
-/** Converte Date ou string ISO 8601 em Date. */
+/** Converte Date ou string ISO em Date. */
 export function toDate(value) {
   if (!value) return null;
   if (value instanceof Date) return value;

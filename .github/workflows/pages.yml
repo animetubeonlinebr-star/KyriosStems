@@ -5,8 +5,8 @@ on:
     branches: [main]
   workflow_dispatch:
 
-# Publica em GitHub Pages. O repositório guarda apenas o código; os metadados
-# vivem no Aiven PostgreSQL e os arquivos no Google Drive, ambos atrás da API.
+# Publica em GitHub Pages. O repositório guarda apenas o código; os arquivos
+# vivem no Google Drive e são lidos direto pelo navegador. Não há servidor.
 
 permissions:
   contents: read
@@ -44,12 +44,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Publica apenas os arquivos da aplicação. Testes, backend e documentação
+      # Publica apenas os arquivos da aplicação. Testes, scripts e documentação
       # não vão para o site.
       - name: Preparar artefato
         run: |
           mkdir -p dist
-          cp -r index.html song.html login.html admin.html css js assets dist/
+          cp -r index.html song.html css js assets dist/
 
       - uses: actions/configure-pages@v5
 

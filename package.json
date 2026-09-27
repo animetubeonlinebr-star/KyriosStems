@@ -1,14 +1,11 @@
 {
   "name": "kyrios-stems",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
-  "description": "Personal Worship Multitrack Library — biblioteca pessoal de sessões de louvor prontas para DAW.",
+  "description": "Personal Worship Multitrack Library — biblioteca pessoal de sessões de louvor prontas para DAW. Estática, no GitHub Pages, com os arquivos no Google Drive.",
   "scripts": {
     "serve": "python3 -m http.server 12000",
-    "check": "node tests/check-project.js",
-    "backend": "npm --prefix backend start",
-    "migrate": "npm --prefix backend run migrate",
-    "test:api": "npm --prefix backend test"
+    "check": "node tests/check-project.js"
   },
   "devDependencies": {}
 }
