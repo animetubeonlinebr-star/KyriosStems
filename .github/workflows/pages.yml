@@ -6,7 +6,8 @@ on:
   workflow_dispatch:
 
 # Publica em GitHub Pages. O repositório guarda apenas o código; os metadados
-# vivem no Aiven PostgreSQL e os arquivos no Google Drive, ambos atrás da API.
+# vivem no Firestore e os arquivos no Google Drive, ambos acessados direto pelo
+# navegador. Não há servidor para hospedar.
 
 permissions:
   contents: read
@@ -28,9 +29,9 @@ jobs:
         with:
           node-version: '22'
 
-      # A verificação do frontend não depende de rede: confere imports, classes
-      # de estilo e assets das páginas. Os testes da API exigem banco e Google
-      # Drive configurados, então rodam localmente, não aqui.
+      # A verificação não depende de rede: confere imports, classes de estilo e
+      # assets das páginas. Os testes das rules exigem o emulador e o console do
+      # Firebase configurados, então rodam localmente, não aqui.
       - name: Conferir integridade do projeto
         run: node tests/check-project.js
 
@@ -44,7 +45,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Publica apenas os arquivos da aplicação. Testes, backend e documentação
+      # Publica apenas os arquivos da aplicação. Testes, scripts e documentação
       # não vão para o site.
       - name: Preparar artefato
         run: |

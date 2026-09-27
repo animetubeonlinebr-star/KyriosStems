@@ -2,9 +2,9 @@
  * KyriosStems - js/data/demo-data.js
  * Biblioteca de demonstração.
  *
- * Usada quando a API não responde, para que a interface do catálogo possa ser
- * avaliada sem backend. Não representa sessões reais: os pacotes não existem,
- * portanto o download fica indisponível.
+ * Usada quando o Firebase ainda não está configurado, para que a interface do
+ * catálogo possa ser avaliada sem backend. Não representa sessões reais: os
+ * pacotes não existem, portanto o download fica indisponível.
  */
 
 import { EXTENSION_CATEGORY } from '../core/constants.js';
@@ -24,8 +24,8 @@ const FOLDER_PREFIX = {
  * revisão. É o que permite identificar a versão atual e ordenar o histórico.
  *
  * Arquivos individuais descrevem a estrutura preservada dentro do pacote. Os
- * identificadores de arquivo são fictícios: em modo demonstração o download
- * falha de propósito, pois nenhum arquivo real existe.
+ * caminhos de Storage são fictícios: em modo demonstração o download falha de
+ * propósito, pois nenhum arquivo real existe.
  */
 function sessionEntries(songId, music, sessions) {
   const created = music.createdAt || '2026-09-12T10:00:00.000Z';
@@ -51,7 +51,8 @@ function sessionEntries(songId, music, sessions) {
         return {
           name: file,
           path: `${FOLDER_PREFIX[category] || ''}${file}`,
-          fileId: `demo_${id}_${category}`,
+          // Sem arquivo real no Drive: os dados de demonstração não baixam.
+          fileId: '',
           size: 0,
           category,
           contentType: 'application/octet-stream',

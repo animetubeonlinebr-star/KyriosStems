@@ -2,15 +2,16 @@
  * KyriosStems - js/services/library-service.js
  * Regras da biblioteca: carrega o catálogo, agrupa e deriva facetas de filtro.
  *
- * Fica entre os repositórios (API) e a apresentação, para que as páginas não
- * conheçam detalhes de persistência.
+ * Fica entre os repositórios (Firestore) e a apresentação, para que as páginas
+ * não conheçam detalhes de persistência.
  */
 
 import {
-  fetchLibrary,
-  fetchSongDetail,
-  SOURCE,
-} from '../repositories/library-repository.js';
+  fetchSongs,
+  fetchSessions,
+  fetchSong,
+  fetchSessionsBySong,
+} from '../repositories/firestore-repository.js';
 import { groupByDaw, markCurrentVersions, byDawThenVersion } from '../models/daw-session.js';
 import { compareText, normalizeText, unique } from '../core/format.js';
 import { byTitle, searchIndex as songSearchIndex } from '../models/song.js';
@@ -30,41 +31,39 @@ import { byTitle, searchIndex as songSearchIndex } from '../models/song.js';
  * `isDemo` e `error` permitem à interface avisar que os dados não são reais.
  */
 export async function loadLibrary() {
-  // Uma única leitura: a rota devolve músicas e sessões juntas. Pedir as duas
-  // em chamadas separadas baixava a biblioteca inteira duas vezes.
-  const result = await fetchLibrary();
+  const [songsResult, sessionsResult] = await Promise.all([fetchSongs(), fetchSessions()]);
 
   const sessionsBySong = new Map();
-  for (const session of result.sessions) {
+  for (const session of sessionsResult.items) {
     if (!sessionsBySong.has(session.songId)) sessionsBySong.set(session.songId, []);
     sessionsBySong.get(session.songId).push(session);
   }
 
   return {
-    songs: [...result.songs].sort(byTitle),
-    sessions: result.sessions,
+    songs: [...songsResult.items].sort(byTitle),
+    sessions: sessionsResult.items,
     sessionsBySong,
-    isDemo: result.source === SOURCE.demo,
-    error: result.error,
-    notConfigured: result.notConfigured,
-    facets: buildFacets(result.songs, result.sessions),
+    isDemo: isDemo(songsResult, sessionsResult),
+    error: songsResult.error || sessionsResult.error,
+    facets: buildFacets(songsResult.items, sessionsResult.items),
   };
 }
 
 /** Carrega uma música e suas sessões, com as versões atuais já marcadas. */
 export async function loadSongDetail(songId) {
-  // Mesma razão: a rota de detalhe já traz música e sessões.
-  const result = await fetchSongDetail(songId);
+  const [songResult, sessionsResult] = await Promise.all([
+    fetchSong(songId),
+    fetchSessionsBySong(songId),
+  ]);
 
-  const sessions = markCurrentVersions([...result.sessions].sort(byDawThenVersion));
+  const sessions = markCurrentVersions([...sessionsResult.items].sort(byDawThenVersion));
 
   return {
-    song: result.song,
+    song: songResult.item,
     sessions: sessions.sort(byDawThenVersion),
     byDaw: groupByDaw(sessions),
-    isDemo: result.source === SOURCE.demo,
-    error: result.error,
-    notConfigured: result.notConfigured,
+    isDemo: isDemo(songResult, sessionsResult),
+    error: songResult.error || sessionsResult.error,
   };
 }
 
@@ -95,4 +94,8 @@ export function statistics(songs, sessions) {
     packages: sessions.filter((session) => Boolean(session.packageFileId)).length,
     bytes: sessions.reduce((sum, session) => sum + (Number(session.packageSize) || 0), 0),
   };
+}
+
+function isDemo(...results) {
+  return results.some((result) => result.source === 'demo');
 }

@@ -10,10 +10,19 @@ export const APP = {
   version: '1.0.0',
 };
 
+/** Coleções do Firestore. */
+export const COLLECTIONS = {
+  songs: 'songs',
+  sessions: 'sessions',
+};
+
 /**
- * Categorias de arquivo dentro de uma sessão. Viram subpastas quando os
- * arquivos são organizados, e são as mesmas do CHECK em session_files.
+ * Prefixo raiz no Firebase Storage.
+ * sessions/{songId}/{sessionId}/package/session.zip
  */
+export const STORAGE_ROOT = 'sessions';
+
+/** Subpastas dentro de uma sessão no Storage. */
 export const STORAGE_FOLDERS = {
   package: 'package',
   project: 'project',
@@ -150,7 +159,7 @@ export const QUERY = {
   sessionId: 'session',
 };
 
-/** Limites práticos de upload. */
+/** Limites práticos de upload (o Firebase Storage tem limite configurável). */
 export const UPLOAD_LIMITS = {
   maxFileBytes: 2 * 1024 * 1024 * 1024,
   maxFiles: 200,
@@ -161,24 +170,51 @@ export const UPLOAD_LIMITS = {
 /**
  * Limites de tempo para operações de rede.
  *
- * A API é um servidor comum: se não responder, a requisição fica pendurada até
- * o navegador desistir. Sem estes limites a interface ficaria carregando
- * indefinidamente, sem dizer o que está acontecendo.
+ * O Firestore, em dispositivo offline ou projeto mal configurado, não rejeita a
+ * leitura: ele repete com backoff. Sem estes limites a interface fica
+ * carregando indefinidamente.
  */
 export const NETWORK = {
-  /** Requisição comum à API. */
-  apiTimeoutMs: 15000,
+  /** Carregamento dos módulos do SDK pelo CDN. */
+  sdkTimeoutMs: 12000,
+  /** Consulta ao Firestore. */
+  readTimeoutMs: 10000,
   /** Autenticação e verificação de sessão. */
-  authTimeoutMs: 12000,
-  /** Envio de um arquivo direto para o Google Drive. */
-  uploadTimeoutMs: 30 * 60 * 1000,
+  authTimeoutMs: 8000,
 };
 
 /**
- * Cota de armazenamento usada apenas como referência visual no painel.
+ * Google Drive, usado para os arquivos das sessões.
  *
- * É o espaço gratuito da conta Google que guarda os arquivos. O valor real
- * depende do plano da conta e é compartilhado com o restante do Drive, então
- * serve como ordem de grandeza, não como medição.
+ * Por que o Drive e não o Firebase Storage: os pacotes de sessão têm gigabytes,
+ * e o plano gratuito do Storage não comporta isso. O Drive da conta dedicada
+ * tem cota própria e é acessível direto do navegador pelo Google Identity
+ * Services, sem servidor no meio.
+ */
+export const GOOGLE = {
+  /**
+   * Escopo mínimo capaz de criar e gerenciar os arquivos da biblioteca.
+   *
+   * `drive.file` dá acesso apenas aos arquivos criados por esta aplicação: ela
+   * não lê nem altera o resto do Drive do usuário. Escopos amplos exigiriam
+   * verificação do app pelo Google e dariam acesso a tudo, sem necessidade.
+   */
+  driveScope: 'https://www.googleapis.com/auth/drive.file',
+  /** Endpoint de upload e de metadados. */
+  apiBase: 'https://www.googleapis.com/drive/v3',
+  uploadBase: 'https://www.googleapis.com/upload/drive/v3',
+  /** MIME de pasta no Drive. */
+  folderMimeType: 'application/vnd.google-apps.folder',
+  /** Margem antes da expiração para renovar o token em vez de falhar no meio. */
+  tokenSafetyMarginMs: 60 * 1000,
+  /** Usado quando o Google não informa `expires_in`. */
+  defaultTokenTtlSeconds: 3600,
+};
+
+/**
+ * Cota de armazenamento, usada apenas como referência visual no painel.
+ *
+ * É o espaço gratuito da conta Google que hospeda os arquivos. O valor real
+ * depende do plano da conta.
  */
 export const STORAGE_QUOTA_BYTES = 15 * 1024 * 1024 * 1024;

@@ -3,7 +3,7 @@
  * Página da música: informações musicais, sessões por DAW e download do pacote.
  */
 
-import { $, clear, el, mount, ready, queryParams } from '../core/dom.js';
+import { $, clear, el, mount, ready, setText, queryParams } from '../core/dom.js';
 import { QUERY, ROUTES, FILE_CATEGORY_LABELS } from '../core/constants.js';
 import {
   formatBytes,
@@ -64,25 +64,10 @@ async function init() {
 /* Avisos                                                                     */
 /* -------------------------------------------------------------------------- */
 
-/** Avisa quando a leitura da API falhou e os dados não são reais. */
+/** Avisa quando a leitura do Firestore falhou e os dados não são reais. */
 function renderNotices(detail) {
   const mountPoint = $('[data-notices]');
   if (!mountPoint || !detail.isDemo) return;
-
-  if (detail.notConfigured) {
-    clear(mountPoint).append(
-      el('div', { class: 'setup-note', role: 'alert' }, [
-        el('strong', { text: 'A API ainda não foi configurada. ' }),
-        el('span', { text: 'Os dados abaixo são de exemplo. ' }),
-        el('span', { text: 'Para exibir a biblioteca real, defina ' }),
-        el('code', { text: 'PRODUCTION_API' }),
-        el('span', { text: ' em ' }),
-        el('code', { text: 'js/core/config.js' }),
-        el('span', { text: '.' }),
-      ]),
-    );
-    return;
-  }
 
   clear(mountPoint).append(
     el('div', { class: 'alert alert--error', role: 'alert' }, [
@@ -90,7 +75,7 @@ function renderNotices(detail) {
       el('div', {}, [
         el('strong', { text: 'Dados de demonstração. ' }),
         el('span', {
-          text: detail.error || 'A API não respondeu.',
+          text: detail.error || 'O Firebase ainda não está configurado.',
         }),
         el('p', { class: 'field__hint mt-4', text: 'Os downloads estão indisponíveis.' }),
       ]),
@@ -373,10 +358,9 @@ function renderNotFound(message) {
   const header = $('[data-song-header]');
   const sessions = $('[data-sessions]');
   const primary = $('[data-primary-download]');
-  const notices = $('[data-notices]');
+  setText($('[data-results-bar]'), '');
 
   if (primary) clear(primary);
-  if (notices) clear(notices);
   if (header) clear(header);
   if (sessions) {
     mount(sessions, el('div', { class: 'empty-state' }, [
