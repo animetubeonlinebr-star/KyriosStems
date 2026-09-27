@@ -1,52 +1,84 @@
 /**
  * KyriosStems - js/core/config.js
- * Endereço da API.
+ * Configuração da biblioteca no Google Drive.
  *
- * O frontend é estático (GitHub Pages) e o backend roda em outro domínio, então
- * o endereço precisa ser explícito. Nada de segredo aqui: a única credencial
- * que o navegador guarda é o token de sessão do administrador, obtido no login.
+ * A aplicação é estática e roda inteira no navegador. Não há backend, não há
+ * login e não há segredo algum neste arquivo.
  *
- * Para publicar, troque `PRODUCTION_API` pelo endereço do backend. Em
- * desenvolvimento, mantenha `DEVELOPMENT_API`.
+ * COMO FUNCIONA
  *
- * Não existe override por arquivo nem por query string: o deploy remove
- * arquivos `*.local.js` do site, então o override por arquivo nunca funcionou
- * em produção e ainda gerava um 404 no console de todo visitante. Um override
- * por query string seria pior: permitiria apontar a API para um servidor
- * alheio e colher o token de sessão do administrador.
+ * A biblioteca é uma pasta no Google Drive compartilhada como "qualquer pessoa
+ * com o link". O navegador lê a listagem e baixa os arquivos usando a API do
+ * Drive com uma API key — que é pública por natureza. Não é preciso OAuth nem
+ * conta Google para CONSULTAR: só para escrever, que nesta etapa é feito
+ * arrastando arquivos no próprio Drive.
+ *
+ * ESTRUTURA DA PASTA
+ *
+ *   {pasta raiz}/
+ *     ├── song.json               metadados da música (opcional)
+ *     ├── capa.jpg                capa (opcional)
+ *     └── {id da sessão}/         uma pasta por sessão
+ *          ├── session.zip        pacote principal
+ *          ├── projeto.rpp
+ *          └── 01 Drums.wav
+ *
+ * Organizar a biblioteca é organizar pastas: a estrutura no Drive é a fonte
+ * da verdade, e não há banco de dados para manter em sincronia.
  */
-
-/** Endereço do backend de desenvolvimento local. */
-const DEVELOPMENT_API = 'http://localhost:8080';
-
-/** Endereço do backend publicado. Troque antes de publicar o site. */
-const PRODUCTION_API = '';
-
-/** Hosts em que o backend de desenvolvimento existe. */
-const LOCAL_HOSTS = ['localhost', '127.0.0.1', '::1', '[::1]', ''];
-
-const isLocal = LOCAL_HOSTS.includes(window.location.hostname);
 
 /**
- * URL base da API, sem barra final.
+ * API key do Google Cloud, restrita à Drive API.
  *
- * O endereço vazio (produção não configurada) é tratado como ausente, e não
- * como caminho relativo: `apiUrl('/x')` nunca deve virar `/x` no domínio do
- * site, que devolveria o próprio HTML.
+ * É PÚBLICA de propósito, e não um segredo: ela identifica a aplicação, não o
+ * usuário. Restrinja-a no Google Cloud para que só estes domínios possam usá-la
+ * (senão alguém consome a sua cota):
+ *   http://localhost:12000
+ *   https://animetubeonlinebr-star.github.io
  */
-export const apiBaseUrl = (isLocal ? DEVELOPMENT_API : PRODUCTION_API).replace(/\/+$/, '');
+export const driveApiKey = 'COLE_AQUI_SUA_API_KEY';
 
 /**
- * Indica que há um endereço utilizável.
+ * Id da pasta raiz da biblioteca no Drive.
  *
- * Fora do localhost, sem `PRODUCTION_API` preenchido o padrão apontaria para a
- * máquina de quem visita, onde não há backend. A interface usa esta flag para
- * dizer que a API não foi configurada, em vez de gastar uma requisição que só
- * pode falhar — o que produziria ERR_CONNECTION_REFUSED no console.
+ * É o trecho final da URL da pasta: em
+ * https://drive.google.com/drive/folders/1AbC...XYZ, o id é `1AbC...XYZ`.
+ *
+ * A pasta precisa estar compartilhada como "qualquer pessoa com o link".
  */
-export const apiConfigured = Boolean(apiBaseUrl);
+export const driveRootFolderId = '';
 
-/** Monta a URL absoluta de um caminho da API. */
-export function apiUrl(path) {
-  return `${apiBaseUrl}${path.startsWith('/') ? path : `/${path}`}`;
+/** Endpoints da API do Drive. */
+export const DRIVE_API = 'https://www.googleapis.com/drive/v3';
+
+/** Nome do arquivo de metadados dentro da pasta da música. */
+export const SONG_METADATA_FILE = 'song.json';
+
+/** Nomes aceitos para o arquivo de capa. */
+export const COVER_FILE_NAMES = ['capa.jpg', 'capa.png', 'cover.jpg', 'cover.png'];
+
+/**
+ * Indica se a configuração foi preenchida.
+ *
+ * Enquanto não estiver, a aplicação mostra a biblioteca de demonstração e
+ * explica o que falta, em vez de tentar uma requisição que só pode falhar.
+ */
+export function isDriveConfigured() {
+  return (
+    typeof driveApiKey === 'string' &&
+    driveApiKey.length > 0 &&
+    !driveApiKey.startsWith('COLE_AQUI') &&
+    typeof driveRootFolderId === 'string' &&
+    driveRootFolderId.length > 0
+  );
+}
+
+/** Monta a URL de um caminho da API do Drive, já com a API key. */
+export function driveUrl(path, params = {}) {
+  const url = new URL(`${DRIVE_API}${path}`);
+  url.searchParams.set('key', driveApiKey);
+  for (const [key, value] of Object.entries(params)) {
+    if (value !== undefined && value !== null) url.searchParams.set(key, String(value));
+  }
+  return url.toString();
 }

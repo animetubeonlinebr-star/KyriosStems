@@ -2,15 +2,11 @@
  * KyriosStems - js/services/library-service.js
  * Regras da biblioteca: carrega o catálogo, agrupa e deriva facetas de filtro.
  *
- * Fica entre os repositórios (API) e a apresentação, para que as páginas não
- * conheçam detalhes de persistência.
+ * Fica entre o repositório (Drive) e a apresentação, para que as páginas não
+ * conheçam detalhes de acesso aos dados.
  */
 
-import {
-  fetchLibrary,
-  fetchSongDetail,
-  SOURCE,
-} from '../repositories/library-repository.js';
+import { fetchLibrary, fetchSongDetail, isDriveConfigured } from '../repositories/drive-repository.js';
 import { groupByDaw, markCurrentVersions, byDawThenVersion } from '../models/daw-session.js';
 import { compareText, normalizeText, unique } from '../core/format.js';
 import { byTitle, searchIndex as songSearchIndex } from '../models/song.js';
@@ -27,11 +23,11 @@ import { byTitle, searchIndex as songSearchIndex } from '../models/song.js';
 
 /**
  * Carrega toda a biblioteca e deriva as facetas de filtro.
+ *
+ * Uma única leitura: cada pasta do Drive já traz a música e suas sessões juntas.
  * `isDemo` e `error` permitem à interface avisar que os dados não são reais.
  */
 export async function loadLibrary() {
-  // Uma única leitura: a rota devolve músicas e sessões juntas. Pedir as duas
-  // em chamadas separadas baixava a biblioteca inteira duas vezes.
   const result = await fetchLibrary();
 
   const sessionsBySong = new Map();
@@ -44,16 +40,16 @@ export async function loadLibrary() {
     songs: [...result.songs].sort(byTitle),
     sessions: result.sessions,
     sessionsBySong,
-    isDemo: result.source === SOURCE.demo,
+    isDemo: result.source === 'demo',
+    notConfigured: Boolean(result.notConfigured),
     error: result.error,
-    notConfigured: result.notConfigured,
     facets: buildFacets(result.songs, result.sessions),
   };
 }
 
 /** Carrega uma música e suas sessões, com as versões atuais já marcadas. */
 export async function loadSongDetail(songId) {
-  // Mesma razão: a rota de detalhe já traz música e sessões.
+  // A pasta da música no Drive já traz as sessões: uma requisição basta.
   const result = await fetchSongDetail(songId);
 
   const sessions = markCurrentVersions([...result.sessions].sort(byDawThenVersion));
@@ -62,9 +58,9 @@ export async function loadSongDetail(songId) {
     song: result.song,
     sessions: sessions.sort(byDawThenVersion),
     byDaw: groupByDaw(sessions),
-    isDemo: result.source === SOURCE.demo,
+    isDemo: result.source === 'demo',
+    notConfigured: Boolean(result.notConfigured),
     error: result.error,
-    notConfigured: result.notConfigured,
   };
 }
 

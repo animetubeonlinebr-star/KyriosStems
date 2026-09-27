@@ -103,7 +103,7 @@ function waveHeight(index) {
 /* -------------------------------------------------------------------------- */
 
 /**
- * Avisa quando os dados exibidos não vêm da API.
+ * Avisa quando os dados exibidos não vêm do Drive.
  *
  * O repositório degrada para a biblioteca de demonstração quando a leitura
  * falha. Sem este aviso o usuário acreditaria estar vendo a biblioteca real.
@@ -117,18 +117,20 @@ function renderNotices() {
 
   if (!isDemo) return;
 
-  // API não configurada não se resolve sozinha: exige mudar o endereço. Por
-  // isso o aviso é distinto do de falha temporária, que sugere tentar de novo.
+  // Não configurada não se resolve sozinha: exige apontar a pasta do Drive.
+  // Por isso o aviso é distinto do de falha temporária, que pede tentar de novo.
   if (notConfigured) {
     mountPoint.append(
       el('div', { class: 'setup-note', role: 'alert' }, [
-        el('strong', { text: 'A API ainda não foi configurada. ' }),
+        el('strong', { text: 'A biblioteca ainda não foi conectada. ' }),
         el('span', { text: 'O catálogo abaixo usa uma biblioteca de exemplo. ' }),
-        el('span', { text: 'Para exibir a biblioteca real, defina ' }),
-        el('code', { text: 'PRODUCTION_API' }),
+        el('span', { text: 'Para exibir a sua, preencha ' }),
+        el('code', { text: 'driveApiKey' }),
+        el('span', { text: ' e ' }),
+        el('code', { text: 'driveRootFolderId' }),
         el('span', { text: ' em ' }),
         el('code', { text: 'js/core/config.js' }),
-        el('span', { text: ' com o endereço do backend publicado.' }),
+        el('span', { text: '.' }),
       ]),
     );
     return;
@@ -150,18 +152,6 @@ function renderNotices() {
     notifyError('Falha ao ler a biblioteca. Exibindo dados de demonstração.');
     return;
   }
-
-  mountPoint.append(
-    el('div', { class: 'setup-note' }, [
-      el('strong', { text: 'Modo demonstração. ' }),
-      el('span', {
-        text: 'A API não respondeu, então o catálogo abaixo usa uma biblioteca de exemplo. ',
-      }),
-      el('span', { text: 'Confira o endereço em ' }),
-      el('code', { text: 'js/core/config.js' }),
-      el('span', { text: ' e se o backend está no ar.' }),
-    ]),
-  );
 }
 
 /* -------------------------------------------------------------------------- */

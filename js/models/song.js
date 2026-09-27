@@ -65,7 +65,7 @@ export function createSong(overrides = {}) {
   };
 }
 
-/** Normaliza um registro vindo da API para o formato do domínio. */
+/** Normaliza dados externos (Drive, song.json) para o formato do domínio. */
 export function fromDocument(docId, data = {}) {
   return createSong({
     ...data,
@@ -73,6 +73,28 @@ export function fromDocument(docId, data = {}) {
     tags: Array.isArray(data.tags) ? data.tags : [],
     bpm: toNumberOrNull(data.bpm),
     duration: toNumberOrNull(data.duration),
+  });
+}
+
+/**
+ * Monta uma música a partir da pasta no Drive.
+ *
+ * O `id` é o id da pasta, porque é ele que a URL da página da música carrega.
+ * O nome da pasta é o título, a menos que o `song.json` diga outra coisa.
+ *
+ * @param {{id: string, name: string, createdTime?: string, modifiedTime?: string}} folder
+ * @param {object} [metadata] conteúdo do song.json, já mesclado
+ */
+export function fromDriveFolder(folder, metadata = {}) {
+  return createSong({
+    ...metadata,
+    id: folder.id,
+    title: metadata.title || folder.name,
+    createdAt: metadata.createdAt || folder.createdTime || new Date().toISOString(),
+    updatedAt: metadata.updatedAt || folder.modifiedTime || new Date().toISOString(),
+    tags: Array.isArray(metadata.tags) ? metadata.tags : [],
+    bpm: toNumberOrNull(metadata.bpm),
+    duration: toNumberOrNull(metadata.duration),
   });
 }
 

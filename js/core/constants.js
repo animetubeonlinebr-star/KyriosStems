@@ -10,10 +10,19 @@ export const APP = {
   version: '1.0.0',
 };
 
+/** Estrutura de pastas e categorias da biblioteca. */
+export const COLLECTIONS = {
+  songs: 'songs',
+  sessions: 'sessions',
+};
+
 /**
- * Categorias de arquivo dentro de uma sessão. Viram subpastas quando os
- * arquivos são organizados, e são as mesmas do CHECK em session_files.
+ * Prefixo raiz no Firebase Storage.
+ * sessions/{songId}/{sessionId}/package/session.zip
  */
+export const STORAGE_ROOT = 'sessions';
+
+/** Subpastas dentro de uma sessão no Storage. */
 export const STORAGE_FOLDERS = {
   package: 'package',
   project: 'project',
@@ -140,8 +149,6 @@ export const FILE_CATEGORY_ORDER = ['package', 'project', 'audio', 'aux'];
 export const ROUTES = {
   catalog: 'index.html',
   song: 'song.html',
-  login: 'login.html',
-  admin: 'admin.html',
 };
 
 /** Chaves de query string. */
@@ -150,7 +157,7 @@ export const QUERY = {
   sessionId: 'session',
 };
 
-/** Limites práticos de upload. */
+/** Limites práticos de upload (o Firebase Storage tem limite configurável). */
 export const UPLOAD_LIMITS = {
   maxFileBytes: 2 * 1024 * 1024 * 1024,
   maxFiles: 200,
@@ -161,24 +168,21 @@ export const UPLOAD_LIMITS = {
 /**
  * Limites de tempo para operações de rede.
  *
- * A API é um servidor comum: se não responder, a requisição fica pendurada até
- * o navegador desistir. Sem estes limites a interface ficaria carregando
- * indefinidamente, sem dizer o que está acontecendo.
+ * O Drive, em conexão instável, pode não responder e deixar a requisição
+ * leitura: ele repete com backoff. Sem estes limites a interface fica
+ * carregando indefinidamente.
  */
 export const NETWORK = {
-  /** Requisição comum à API. */
-  apiTimeoutMs: 15000,
-  /** Autenticação e verificação de sessão. */
-  authTimeoutMs: 12000,
-  /** Envio de um arquivo direto para o Google Drive. */
-  uploadTimeoutMs: 30 * 60 * 1000,
+  /** Carregamento de dependências externas pelo CDN. */
+  sdkTimeoutMs: 12000,
+  /** Consulta à API do Drive. */
+  readTimeoutMs: 10000,
+  /** Verificação de conectividade com o Drive. */
+  authTimeoutMs: 8000,
 };
 
 /**
- * Cota de armazenamento usada apenas como referência visual no painel.
- *
- * É o espaço gratuito da conta Google que guarda os arquivos. O valor real
- * depende do plano da conta e é compartilhado com o restante do Drive, então
- * serve como ordem de grandeza, não como medição.
+ * Cota de armazenamento da conta Google, usada apenas
+ * como referência visual. O valor real depende do plano da conta.
  */
 export const STORAGE_QUOTA_BYTES = 15 * 1024 * 1024 * 1024;

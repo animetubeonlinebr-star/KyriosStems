@@ -5,76 +5,55 @@ Conhecimento do repositório para sessões de trabalho futuras.
 ## O que é
 
 KyriosStems: biblioteca pessoal de sessões musicais de louvor prontas para DAW.
-Frontend **estático** (HTML5 + CSS3 + JavaScript ES Modules, sem build) no
-GitHub Pages, e um **backend próprio** que guarda os metadados no Aiven
-PostgreSQL e os arquivos no Google Drive.
+Aplicação **100% estática** (HTML5 + CSS3 + JavaScript ES Modules, sem build),
+publicada no GitHub Pages. **Sem servidor, sem login, sem banco de dados.**
 
 **Princípio inegociável:** o sistema armazena e organiza sessões prontas; não
 processa áudio. Nada de separação de stems, edição, mixagem ou conversão.
 
+## Arquitetura
+
 ```text
+Google Drive (pasta pública por link)
+   │  API key pública, SOMENTE LEITURA
+   ▼
 GitHub Pages (estático)
-        │ HTTPS + token de sessão
-        ▼
-Backend (Node, sem framework)
-        ├──► Aiven PostgreSQL   metadados
-        └──► Google Drive       WAV, ZIP, projeto da DAW
 ```
+
+A **estrutura de pastas no Drive é a fonte da verdade**. Não há banco para
+sincronizar: pasta de primeiro nível = música; subpasta = sessão; o nome da
+pasta é o rótulo. Um `song.json` opcional acrescenta metadados.
+
+Escrever no Drive exigiria OAuth; por isso **a aplicação só lê**. A biblioteca é
+alimentada arrastando pastas no Drive — decisão deliberada desta etapa.
 
 ## Comandos
 
 ```bash
-# Frontend
-npm run serve            # http://localhost:12000
-npm run check            # verificação de integridade (rápida, sem rede)
-
-# Backend (tudo em backend/)
-cd backend
-npm install
-npm run migrate          # aplica as migrações SQL
-npm run migrate:status   # lista o que falta
-npm run db:check         # testa a conexão com o Aiven
-npm run db:verify        # confere as restrições do banco
-npm run admin:create -- email@exemplo.com
-npm run drive:check      # confere a configuração do Drive
-npm test                 # testes de integração da API
-npm start                # sobe a API em :8080
+npm run serve     # http://localhost:12000
+npm run check     # verificação de integridade (rápida, sem rede)
 ```
 
 ## Estrutura
 
 ```text
-index.html song.html login.html admin.html
-css/    variables reset global components catalog song admin
+index.html song.html
+css/    variables reset global components catalog song
 js/
-  core/         constants, config, dom, format, async
-  api/          client (HTTP + sessão), auth
+  core/         config (Drive), constants, dom, format, async
   models/       song, daw-session
-  repositories/ library-repository, file-repository
-  services/     library-service, download-service, publish-service
+  repositories/ drive-repository
+  services/     library-service, download-service
   components/   app-header, search, filters, song-card, session-card
-  pages/        catalog, song, login, admin
+  pages/        catalog, song
   ui/           icons, toast, modal
   data/         demo-data
-backend/
-  src/
-    config.js env.js
-    auth/       passwords (scrypt), tokens (HMAC)
-    db/         pool, migrate, mappers, songs, sessions, admins
-    drive/      client (API REST do Drive)
-    http/       router, respond, handler
-    lib/        files (classificação e nomes)
-    routes/     auth, songs, drive
-  migrations/   001_init.sql
-  scripts/      create-admin, google-auth, drive-check
-  certs/        aiven-ca.pem
-  tests/        api.test.js
+exemplo/  song.json (modelo comentado)
 tests/    check-project.js
-docs/     architecture, database, storage, security, workflow, setup
 ```
 
-Dependências sempre fluem página → serviço → repositório → API. Uma página nunca
-fala com a API diretamente.
+Dependências sempre fluem página → serviço → repositório. Uma página nunca fala
+com a API do Drive diretamente.
 
 ## Convenções
 
@@ -85,109 +64,70 @@ fala com a API diretamente.
   `textContent`; não existe prop de HTML bruto (era vetor de XSS).
 - Toda classe CSS usada pelo JavaScript precisa existir em `css/`. O
   `npm run check` falha se faltar.
-- Toda operação de rede passa por `withTimeout` (`js/core/async.js`) e por
-  `request()` (`js/api/client.js`) no frontend.
-- O backend não usa framework. O roteador é próprio; a API tem poucas rotas.
-- Nenhum segredo tem valor padrão no backend: variável ausente derruba a
-  inicialização, em vez de cair para um valor de desenvolvimento.
+- Toda operação de rede passa por `withTimeout` (`js/core/async.js`).
 
 ## Armadilhas conhecidas
 
-### A validação de conteúdo vive no banco, não na API
+### `npm run check` não detecta erro de sintaxe nem campo renomeado
 
-O que as Security Rules do Firestore validavam hoje são restrições `CHECK` em
-`backend/migrations/001_init.sql`. A validação no banco é a última linha de
-defesa: vale mesmo que um erro na API deixe passar um valor inválido. Ao mudar um
-limite, mude os dois lugares e rode `npm run db:verify`, que grava dados
-inválidos e espera erro.
+Ele valida imports, símbolos, classes e assets — não o corpo das funções. Nesta
+migração, um `fileId: ,` (sintaxe inválida) e referências a `packagePath`
+(campo renomeado) passaram pelo check sem alarde. **Ao renomear campo ou mexer em
+expressões, valide os módulos de verdade:**
 
-### Os bytes dos arquivos não passam pela API
+```bash
+for f in $(find js -name "*.js"); do
+  node --input-type=module -e "await import('file://$PWD/$f').catch(()=>{})" 2>&1 | grep -i syntaxerror
+done
+```
 
-O backend cria a pasta e assina uma URL de envio retomável; o navegador envia
-direto para o Drive. Um pacote de sessão pode ter gigabytes: atravessar a API
-somaria latência e esbarraria no limite de corpo da requisição. Não "simplifique"
-isso fazendo o backend receber o arquivo.
+### Módulos ES não carregam por `file://`
 
-### A ordem de exclusão importa
-
-Os arquivos saem do Drive **antes** do registro no banco. Se o Drive falhar, a
-música continua existindo e pode ser tentada de novo; o contrário deixaria
-arquivos órfãos ocupando cota, sem referência para encontrá-los. Por isso a
-exclusão devolve 502 quando o Drive não responde — é o comportamento correto,
-não um bug.
+A origem é `null` e o navegador bloqueia. Abra sempre por HTTP
+(`npm run serve`). O sintoma é página em branco — por isso os HTMLs têm estado
+inicial pré-renderizado (spinner, breadcrumb), que aparece mesmo quando o módulo
+falha.
 
 ### A leitura degrada para dados de demonstração
 
-Quando a API falha, o repositório devolve a biblioteca de demonstração **junto
-com o erro**. A interface é obrigada a avisar (`renderNotices`). Nunca remova
+Quando o Drive falha, o repositório devolve a biblioteca de demonstração **junto
+com o erro**, e a interface é obrigada a avisar (`renderNotices`). Nunca remova
 esse aviso: sem ele o usuário acredita estar vendo a biblioteca real.
 
-### O TLS do Aiven exige a CA do projeto
+São dois avisos distintos, de propósito: "não configurada" (exige preencher
+`js/core/config.js`) e "falhou" (pede tentar de novo). Têm ações diferentes.
 
-A Project CA do Aiven é autoassinada, então o repositório de CAs do sistema não
-a reconhece. O arquivo `backend/certs/aiven-ca.pem` é **público** (certificado,
-não chave) e precisa ser versionado. Desativar a verificação
-(`rejectUnauthorized: false`) não é alternativa: exporia a senha do banco a um
-intermediário na rede.
+### A API key é pública
 
-### O OAuth do Google Drive precisa de uma conta dedicada
+Ela vai no JavaScript e identifica a aplicação, não o usuário. O que protege é a
+**restrição por sites** no Google Cloud. Sem ela, qualquer site consome a cota.
 
-O backend guarda um refresh token e o troca por access token. A conta de serviço
-não serve para uma pasta no "Meu Drive" de uma conta comum: ela não é dona da
-pasta. O cliente OAuth precisa ser do tipo **App para computador** — um cliente
-do tipo "Web" exigiria cadastrar a URI de redirecionamento antes de funcionar.
+### O download público depende do link
 
-## Segurança
-
-- Autorização decidida pela API, por token de sessão assinado (HMAC-SHA256).
-  A interface só evita mostrar o que não funcionaria.
-- Senha em scrypt, com os parâmetros gravados junto ao hash.
-- Comparação de senha e de assinatura em tempo constante.
-- O login verifica a senha mesmo quando o e-mail não existe, para que o tempo de
-  resposta não revele quais e-mails estão cadastrados.
-- CORS restrito às origens configuradas em `KYRIOS_ALLOWED_ORIGINS`. `*`
-  permitiria que qualquer site usasse a API com as credenciais do usuário.
-- O nome amigável do download é reduzido a um nome de arquivo seguro antes de
-  entrar no `Content-Disposition`: quebra de linha ali permitiria injetar
-  cabeçalhos na resposta.
-- Nunca versionar `backend/.env`. A CA do Aiven **é** versionada, de propósito.
+Cada arquivo é servido por link. Se a pasta deixar de ser pública, o catálogo
+continua listando (a listagem usa a API key) mas o download falha.
 
 ## Estado atual
 
-Frontend, backend e publicação no Pages prontos. O site está no ar em
-`https://animetubeonlinebr-star.github.io/KyriosStems/` (Pages ativo, build por
-GitHub Actions). Falta configurar as contas:
+Aplicação completa e funcional. Falta apenas configuração de conta:
 
-1. `backend/.env` com a senha do Aiven (rotacionada) e um `KYRIOS_JWT_SECRET`
-2. Credencial OAuth (App para computador) e `npm run google-auth`
-3. Pasta raiz no Drive, compartilhada com a conta dedicada
-4. `npm run admin:create` para criar o administrador
-5. Publicar o backend em um host gratuito e apontar `js/core/config.js`
+1. Compartilhar a pasta da biblioteca no Drive como "qualquer pessoa com o link"
+2. Ativar a Drive API e criar uma API key restrita por sites
+3. Preencher `driveApiKey` e `driveRootFolderId` em `js/core/config.js`
 
-Enquanto o passo 5 não acontecer, `js/core/config.js` aponta para
-`http://localhost:8080` e o site publicado cai no modo demonstração. Não é bug:
-o frontend não tem para onde falar. O mesmo vale para `KYRIOS_ALLOWED_ORIGINS`,
-que precisa incluir o domínio do Pages além do localhost.
-
-## Testar o backend sem o Aiven
-
-`npm test` exige banco real e credenciais do Drive. Para rodar tudo localmente
-sem tocar em produção, suba um PostgreSQL com TLS:
-
-- O pool sempre exige `ssl.ca` com verificação (`backend/src/db/pool.js`), então
-  o servidor precisa de certificado próprio. Gere uma CA local, sirva
-  `server.crt`/`server.key` no contêiner e aponte `KYRIOS_DB_CA_PATH` para a CA
-  local no `.env`.
-- Os testes criam dados `test_%` e os removem no fim; o Drive é simulado, e as
-  credenciais do Drive podem ser valores quaisquer em `test:api`.
-
-Verificado nesta base: 37 casos em `api.test.js` e 28 em `drive-flow.test.js`,
-todos passando, e `db:verify` recusando os 13 casos inválidos.
+Enquanto isso, o catálogo mostra a biblioteca de exemplo com o aviso de que a
+biblioteca ainda não foi conectada.
 
 ## Fluxo de trabalho do repositório
 
 Um push por etapa concluída. Mensagens de commit descritivas, em português,
 explicando o porquê e não apenas o quê.
 
-Pull requests: branch com o trabalho, PR para `main`, merge só depois de revisar.
-O PR #1 (`backend-aiven-drive`) foi mergeado assim.
+## Histórico
+
+Este repositório passou por duas arquiteturas antes desta, ambas preservadas:
+
+| Branch | Arquitetura | Por que saiu |
+|---|---|---|
+| `backend-aiven-drive-legacy` | Backend Node + Aiven PostgreSQL + Drive | GitHub Pages não executa servidor |
+| `arquitetura-estatica-drive` (PR #2) | Estático + Firebase + OAuth do Drive | Exigia Firebase, rules e cliente OAuth; mais configuração que o necessário |

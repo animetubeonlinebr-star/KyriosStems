@@ -27,7 +27,7 @@ import { createId, normalizeText, compareText } from '../core/format.js';
  * @property {number|null} sampleRate
  * @property {number|null} bitDepth
  * @property {number|null} duration
- * @property {string} packageFileId Id do ZIP no Google Drive
+ * @property {string} packageFileId Identificador do ZIP no Drive
  * @property {number|null} packageSize
  * @property {SessionFile[]} files
  * @property {string} createdAt
@@ -86,6 +86,33 @@ export function fromDocument(docId, data = {}) {
     files: Array.isArray(data.files) ? data.files : [],
   });
 }
+
+/**
+ * Monta uma sessão a partir da subpasta no Drive.
+ *
+ * O nome da pasta é o rótulo da DAW: organizar a biblioteca é nomear pastas.
+ * O `song.json` pode sobrepor qualquer campo, o que cobre os casos em que o
+ * nome da pasta não basta (versão, formato, descrição).
+ *
+ * @param {{id: string, name: string, createdTime?: string, modifiedTime?: string}} folder
+ * @param {object} [overrides]
+ */
+export function fromDriveFolder(folder, overrides = {}) {
+  return createSession({
+    daw: folder.name,
+    ...overrides,
+    id: folder.id,
+    createdAt: overrides.createdAt || folder.createdTime || new Date().toISOString(),
+    updatedAt: overrides.updatedAt || folder.modifiedTime || new Date().toISOString(),
+    version: Number(overrides.version) || 1,
+    sampleRate: toNumberOrNull(overrides.sampleRate),
+    bitDepth: toNumberOrNull(overrides.bitDepth),
+    duration: toNumberOrNull(overrides.duration),
+    packageSize: toNumberOrNull(overrides.packageSize),
+    files: Array.isArray(overrides.files) ? overrides.files : [],
+  });
+}
+
 export function toDocument(session) {
   const payload = {};
   for (const field of SESSION_FIELDS) {

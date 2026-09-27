@@ -1,0 +1,32 @@
+{
+  "_comentario": [
+    "Modelo de song.json. Copie para song.json e coloque na pasta da música no Drive.",
+    "Todos os campos são opcionais: o nome da pasta já vira o título, e cada subpasta",
+    "vira uma sessão, usando o nome dela como rótulo da DAW. Use este arquivo para os",
+    "metadados que o nome da pasta não carrega."
+  ],
+
+  "title": "Vim Para Adorar-te",
+  "artist": "Adoração e Adoradores",
+  "album": "Ao Vivo",
+  "key": "E",
+  "bpm": 72,
+  "timeSignature": "4/4",
+  "duration": 248,
+  "category": "Louvor",
+  "tags": ["adoração", "lento"],
+  "description": "Sessão completa com guia e click.",
+
+  "sessions": {
+    "_comentario": "A chave é o nome exato da subpasta da sessão.",
+    "REAPER": {
+      "dawVersion": "7.x",
+      "version": 2,
+      "format": "WAV",
+      "sampleRate": 48000,
+      "bitDepth": 24,
+      "duration": 248,
+      "description": "Versão atual, com click e guia."
+    }
+  }
+}
