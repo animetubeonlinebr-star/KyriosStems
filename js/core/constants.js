@@ -147,6 +147,9 @@ export const FILE_CATEGORY_ORDER = ['package', 'project', 'audio', 'aux'];
 
 /** Rotas internas. */
 export const ROUTES = {
+  // A tela de cadastro é TEMPORÁRIA e fica como entrada do site.
+  // Ao removê-la, aponte esta rota de volta para 'index.html'.
+  entry: 'cadastro.html',
   catalog: 'index.html',
   song: 'song.html',
 };

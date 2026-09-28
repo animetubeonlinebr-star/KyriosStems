@@ -1,0 +1,108 @@
+/* ==========================================================================
+   KyriosStems - cadastro.css
+   Tela TEMPORÁRIA de cadastro de e-mail e senha.
+
+   Este arquivo deve ser removido junto com a tela. Veja "Remover a tela
+   temporária" no README.
+   ========================================================================== */
+
+.cadastro-shell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: var(--space-5);
+}
+
+.cadastro-card {
+  width: 100%;
+  max-width: var(--login-max);
+  padding: var(--space-8) var(--space-6);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+}
+
+.cadastro-card__brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  text-align: center;
+  margin-bottom: var(--space-6);
+}
+
+.cadastro-card__title {
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-bold);
+  letter-spacing: -0.02em;
+}
+
+.cadastro-card__subtitle {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.cadastro-card__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.cadastro-card__footer {
+  margin-top: var(--space-6);
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--color-border);
+  text-align: center;
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.cadastro-card__footer a:hover {
+  color: var(--color-primary);
+}
+
+.cadastro-badge {
+  display: inline-block;
+  align-self: center;
+  padding: 2px var(--space-3);
+  margin-bottom: var(--space-4);
+  border: 1px solid var(--color-warning-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-warning-soft);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  color: var(--color-warning);
+}
+
+/* Lista de quem já foi cadastrado. */
+.cadastro-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: var(--space-5);
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--color-border);
+  list-style: none;
+}
+
+.cadastro-list__item {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+
+.cadastro-list__email {
+  font-family: var(--font-mono);
+  color: var(--color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cadastro-list__date {
+  white-space: nowrap;
+}
