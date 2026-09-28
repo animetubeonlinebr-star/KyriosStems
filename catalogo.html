@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Música — KyriosStems</title>
-  <meta name="description" content="Informações da música e sessões disponíveis para download em pacote completo.">
+  <title>KyriosStems — Personal Worship Multitrack Library</title>
+  <meta name="description" content="Biblioteca pessoal de sessões musicais de louvor preparadas para utilização em DAWs.">
   <meta name="theme-color" content="#0d1114">
   <meta name="color-scheme" content="dark">
 
@@ -18,9 +18,9 @@
   <link rel="stylesheet" href="css/variables.css">
   <link rel="stylesheet" href="css/global.css">
   <link rel="stylesheet" href="css/components.css">
-  <link rel="stylesheet" href="css/song.css">
+  <link rel="stylesheet" href="css/catalog.css">
 
-  <script type="module" src="js/pages/song.js"></script>
+  <script type="module" src="js/pages/catalog.js"></script>
 </head>
 <body class="page">
   <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
@@ -28,22 +28,16 @@
   <header data-header></header>
 
   <main class="page__main" id="conteudo">
-    <div class="container">
-      <div class="song-header" data-song-header>
-        <nav class="song-header__breadcrumb" aria-label="Trilha de navegação">
-          <a href="catalogo.html">Catálogo</a>
-          <span>/</span>
-          <span>Carregando…</span>
-        </nav>
-      </div>
-      <div data-notices></div>
-      <div data-primary-download></div>
+    <section class="catalog-hero" data-hero></section>
 
-      <h2 class="section-title">Sessões</h2>
-      <div class="session-list mt-4" data-sessions>
+    <div class="container">
+      <div data-notices></div>
+      <div data-toolbar></div>
+      <div class="results-bar" data-results-bar role="status" aria-live="polite"></div>
+      <div data-results>
         <div class="loading-state">
           <div class="spinner" aria-hidden="true"></div>
-          <span>Carregando sessões...</span>
+          <span>Carregando biblioteca...</span>
         </div>
       </div>
     </div>
@@ -55,7 +49,7 @@
   <noscript>
     <div class="container">
       <p class="alert alert--error mt-6">
-        O KyriosStems depende de JavaScript para carregar as sessões. Ative-o para ver a música.
+        O KyriosStems depende de JavaScript para carregar o catálogo. Ative-o para ver a biblioteca.
       </p>
     </div>
   </noscript>

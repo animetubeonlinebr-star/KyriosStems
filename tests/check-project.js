@@ -13,7 +13,7 @@ const fs = require('fs');
 const path = require('path');
 
 const ROOT = path.resolve(__dirname, '..');
-const PAGES = ['cadastro.html', 'index.html', 'song.html'];
+const PAGES = ['index.html', 'catalogo.html', 'song.html'];
 
 let problems = 0;
 let checks = 0;

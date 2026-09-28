@@ -182,7 +182,8 @@ biblioteca verdadeira.
 > **Esta tela deve ser removida.** Ela existe apenas para criar contas e não faz
 > parte da arquitetura: a biblioteca continua sendo lida do Drive, sem login.
 
-O site abre em `cadastro.html`, que cadastra **e-mail e senha**. A senha **não é
+O site abre na raiz (`index.html`), que hoje é a tela de cadastro de
+**e-mail e senha**. O catálogo fica em `catalogo.html`. A senha **não é
 gravada por esta aplicação**: ela vai para o Firebase Authentication, que guarda
 apenas o hash com salt e nunca a devolve. No Firestore fica só o e-mail e a
 data, para a tela listar quem foi cadastrado.
@@ -226,12 +227,13 @@ service cloud.firestore {
 
 Quando não precisar mais dela:
 
-1. Apague `cadastro.html`, `css/cadastro.css`, `js/pages/cadastro.js` e `js/firebase/`
-2. Em `js/core/constants.js`, remova a rota `entry`
-3. Em `tests/check-project.js`, tire `cadastro.html` da lista `PAGES`
-4. No `.github/workflows/pages.yml`, tire `cadastro.html` do `cp -r`
-5. Publique a regra `allow read, write: if false;` no Firestore
-6. **Apague as contas criadas**, em Authentication > Users
+1. Troque os nomes: `catalogo.html` volta a ser `index.html`
+2. Apague `css/cadastro.css`, `js/pages/cadastro.js` e `js/firebase/`
+3. Em `js/core/constants.js`, aponte `catalog` de volta para `'index.html'`
+4. Em `tests/check-project.js`, tire `catalogo.html` da lista `PAGES`
+5. No `.github/workflows/pages.yml`, troque `catalogo.html` por nada no `cp -r`
+6. Publique a regra `allow read, write: if false;` no Firestore
+7. **Apague as contas criadas**, em Authentication > Users
 
-O passo 6 importa: remover a tela não apaga os cadastros.
+O último passo importa: remover a tela não apaga os cadastros.
 
