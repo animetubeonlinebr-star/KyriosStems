@@ -174,3 +174,64 @@ biblioteca verdadeira.
 | GitHub Pages | Publicar o site estático | gratuito |
 | Google Drive | Guardar os arquivos | gratuito até 15 GB |
 | Google Drive API | Listar e baixar | gratuito (com cota) |
+
+---
+
+## Tela temporária de cadastro
+
+> **Esta tela deve ser removida.** Ela existe apenas para criar contas e não faz
+> parte da arquitetura: a biblioteca continua sendo lida do Drive, sem login.
+
+O site abre em `cadastro.html`, que cadastra **e-mail e senha**. A senha **não é
+gravada por esta aplicação**: ela vai para o Firebase Authentication, que guarda
+apenas o hash com salt e nunca a devolve. No Firestore fica só o e-mail e a
+data, para a tela listar quem foi cadastrado.
+
+### Por que a senha não vai para um banco nosso
+
+A aplicação é estática e o repositório é **público**. Qualquer coisa que o
+navegador grave fica visível para qualquer visitante — uma tabela de senhas ali
+seria lida por qualquer pessoa, e um hash exposto é alvo de quebra offline.
+Por isso a senha é delegada a um serviço que existe para isso.
+
+### Configurar
+
+1. Crie um projeto em [console.firebase.google.com](https://console.firebase.google.com)
+2. **Authentication > Sign-in method**: ative **E-mail/senha**
+3. **Firestore Database**: crie o banco
+4. **Configurações do projeto > Seus apps > Web**: copie os valores para
+   `js/firebase/config.js`
+5. Publique as Security Rules abaixo
+
+```javascript
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /cadastros/{doc} {
+      // Criação livre: é o que a tela de cadastro precisa.
+      allow create: if request.resource.data.keys().hasOnly(['email', 'createdAt'])
+                    && request.resource.data.email is string
+                    && request.resource.data.email.size() <= 320
+                    && request.resource.data.createdAt is string;
+      // Leitura pública APENAS enquanto a tela temporária existir.
+      // Ao removê-la, troque por: allow read, write: if false;
+      allow read: if true;
+      allow update, delete: if false;
+    }
+  }
+}
+```
+
+### Remover a tela temporária
+
+Quando não precisar mais dela:
+
+1. Apague `cadastro.html`, `css/cadastro.css`, `js/pages/cadastro.js` e `js/firebase/`
+2. Em `js/core/constants.js`, remova a rota `entry`
+3. Em `tests/check-project.js`, tire `cadastro.html` da lista `PAGES`
+4. No `.github/workflows/pages.yml`, tire `cadastro.html` do `cp -r`
+5. Publique a regra `allow read, write: if false;` no Firestore
+6. **Apague as contas criadas**, em Authentication > Users
+
+O passo 6 importa: remover a tela não apaga os cadastros.
+

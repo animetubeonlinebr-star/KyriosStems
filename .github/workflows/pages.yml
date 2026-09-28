@@ -49,7 +49,7 @@ jobs:
       - name: Preparar artefato
         run: |
           mkdir -p dist
-          cp -r index.html song.html css js assets dist/
+          cp -r cadastro.html index.html song.html css js assets dist/
 
       - uses: actions/configure-pages@v5
 
