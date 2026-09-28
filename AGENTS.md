@@ -109,8 +109,13 @@ continua listando (a listagem usa a API key) mas o download falha.
 
 ## Tela temporária de cadastro
 
-`cadastro.html` é a **entrada do site** e existe apenas para criar contas. Não é
-a arquitetura: a biblioteca continua sendo lida do Drive, sem login.
+`index.html` é a **entrada do site** e hoje é a tela de cadastro. Ela existe
+apenas para criar contas e não é a arquitetura: a biblioteca continua sendo lida
+do Drive, sem login. O catálogo fica em `catalogo.html`.
+
+O GitHub Pages serve `index.html` na raiz, e foi por isso que a tela ocupou esse
+nome: o pedido era abrir o cadastro ao acessar a URL do site. Ao removê-la, o
+catálogo volta a ser `index.html`.
 
 A senha **não** é gravada por nós. Ela vai para o Firebase Authentication, que
 guarda só o hash com salt. No Firestore fica apenas e-mail e data.

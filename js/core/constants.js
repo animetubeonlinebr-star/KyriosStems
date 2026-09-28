@@ -147,10 +147,9 @@ export const FILE_CATEGORY_ORDER = ['package', 'project', 'audio', 'aux'];
 
 /** Rotas internas. */
 export const ROUTES = {
-  // A tela de cadastro é TEMPORÁRIA e fica como entrada do site.
-  // Ao removê-la, aponte esta rota de volta para 'index.html'.
-  entry: 'cadastro.html',
-  catalog: 'index.html',
+  // O site abre em index.html, que hoje é a TELA TEMPORÁRIA de cadastro.
+  // Ao removê-la, o catálogo volta a ser index.html (veja o README).
+  catalog: 'catalogo.html',
   song: 'song.html',
 };
 
