@@ -107,27 +107,18 @@ Ela vai no JavaScript e identifica a aplicação, não o usuário. O que protege
 Cada arquivo é servido por link. Se a pasta deixar de ser pública, o catálogo
 continua listando (a listagem usa a API key) mas o download falha.
 
-## Tela temporária de cadastro
+## Sem cadastro e sem Firebase
 
-`index.html` é a **entrada do site** e hoje é a tela de cadastro. Ela existe
-apenas para criar contas e não é a arquitetura: a biblioteca continua sendo lida
-do Drive, sem login. O catálogo fica em `catalogo.html`.
+Não há login, contas nem banco. O Firebase existiu apenas para sustentar uma
+tela temporária de cadastro que já foi **removida**: o site abre direto no
+catálogo (`index.html`) e a biblioteca continua sendo lida do Drive.
 
-O GitHub Pages serve `index.html` na raiz, e foi por isso que a tela ocupou esse
-nome: o pedido era abrir o cadastro ao acessar a URL do site. Ao removê-la, o
-catálogo volta a ser `index.html`.
-
-A senha **não** é gravada por nós. Ela vai para o Firebase Authentication, que
-guarda só o hash com salt. No Firestore fica apenas e-mail e data.
-
-O motivo é o repositório ser público: qualquer coisa que o navegador grave é
-visível para qualquer visitante. Uma tabela de senhas ali seria lida por
-qualquer pessoa — e hash exposto é alvo de quebra offline.
-
-**Nunca grave senha, hash ou token no Firestore.**
-
-Há um roteiro de remoção no README. Ao remover a tela, não esqueça de apagar as
-contas no console: remover a tela não apaga os cadastros.
+A remoção seguiu o roteiro que ficava no README: `catalogo.html` voltou a ser
+`index.html`, apagou-se `css/cadastro.css`, `js/pages/cadastro.js` e
+`js/firebase/`, e ajustaram-se `js/core/constants.js`, `tests/check-project.js`
+e o workflow do Pages. Se algum dia a tela voltar, não grave senha, hash ou
+token no Firestore: o repositório é público e tudo que o navegador grava fica
+visível.
 
 ## Estado atual
 
@@ -136,8 +127,6 @@ Aplicação completa e funcional. Falta apenas configuração de conta:
 1. Compartilhar a pasta da biblioteca no Drive como "qualquer pessoa com o link"
 2. Ativar a Drive API e criar uma API key restrita por sites
 3. Preencher `driveApiKey` e `driveRootFolderId` em `js/core/config.js`
-4. **Tela temporária:** criar o projeto Firebase, ativar E-mail/senha, publicar
-   as rules e preencher `js/firebase/config.js`
 
 Enquanto (1)–(3) não estiverem prontos, o catálogo mostra a biblioteca de exemplo
 com o aviso de que a biblioteca ainda não foi conectada.
@@ -155,3 +144,4 @@ Este repositório passou por duas arquiteturas antes desta, ambas preservadas:
 |---|---|---|
 | `backend-aiven-drive-legacy` | Backend Node + Aiven PostgreSQL + Drive | GitHub Pages não executa servidor |
 | `arquitetura-estatica-drive` (PR #2) | Estático + Firebase + OAuth do Drive | Exigia Firebase, rules e cliente OAuth; mais configuração que o necessário |
+| Etapa atual | Estático + Drive, sem Firebase | A tela de cadastro (Firebase Auth/Firestore) foi removida; não havia login na arquitetura |

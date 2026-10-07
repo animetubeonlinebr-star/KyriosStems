@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Cadastro — KyriosStems</title>
-  <meta name="robots" content="noindex">
+  <title>KyriosStems — Personal Worship Multitrack Library</title>
+  <meta name="description" content="Biblioteca pessoal de sessões musicais de louvor preparadas para utilização em DAWs.">
   <meta name="theme-color" content="#0d1114">
   <meta name="color-scheme" content="dark">
 
@@ -18,64 +18,40 @@
   <link rel="stylesheet" href="css/variables.css">
   <link rel="stylesheet" href="css/global.css">
   <link rel="stylesheet" href="css/components.css">
-  <link rel="stylesheet" href="css/cadastro.css">
+  <link rel="stylesheet" href="css/catalog.css">
 
-  <script type="module" src="js/pages/cadastro.js"></script>
+  <script type="module" src="js/pages/catalog.js"></script>
 </head>
-<body>
-  <main class="cadastro-shell">
-    <div class="cadastro-card">
-      <span class="cadastro-badge">Tela temporária</span>
+<body class="page">
+  <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
 
-      <div class="cadastro-card__brand">
-        <span class="brand__mark" aria-hidden="true">
-          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor"
-               stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="4" y="10" width="16" height="10" rx="2"/>
-            <path d="M8 10V7a4 4 0 018 0v3"/>
-          </svg>
-        </span>
-        <h1 class="cadastro-card__title">KyriosStems</h1>
-        <p class="cadastro-card__subtitle">Cadastro de acesso</p>
-      </div>
+  <header data-header></header>
 
-      <noscript>
-        <p class="alert alert--error" role="alert">
-          Esta tela depende de JavaScript. Ative-o para cadastrar.
-        </p>
-      </noscript>
+  <main class="page__main" id="conteudo">
+    <section class="catalog-hero" data-hero></section>
 
-      <form class="cadastro-card__form" data-cadastro-form novalidate>
-        <div class="field">
-          <label class="field__label" for="email">E-mail</label>
-          <input type="email" id="email" name="email" class="input"
-                 autocomplete="username" required placeholder="seu@email.com">
+    <div class="container">
+      <div data-notices></div>
+      <div data-toolbar></div>
+      <div class="results-bar" data-results-bar role="status" aria-live="polite"></div>
+      <div data-results>
+        <div class="loading-state">
+          <div class="spinner" aria-hidden="true"></div>
+          <span>Carregando biblioteca...</span>
         </div>
-        <div class="field">
-          <label class="field__label" for="senha">Senha</label>
-          <input type="password" id="senha" name="senha" class="input"
-                 autocomplete="new-password" required placeholder="mínimo 6 caracteres">
-          <p class="field__hint">A senha é guardada pelo Firebase Authentication, nunca por esta página.</p>
-        </div>
-        <div class="field">
-          <label class="field__label" for="confirmacao">Confirme a senha</label>
-          <input type="password" id="confirmacao" name="confirmacao" class="input"
-                 autocomplete="new-password" required placeholder="repita a senha">
-        </div>
-
-        <button type="submit" class="btn btn--primary btn--block" data-cadastro-submit>
-          Cadastrar
-        </button>
-
-        <div data-feedback role="alert"></div>
-      </form>
-
-      <div data-registrations></div>
-
-      <div class="cadastro-card__footer">
-        <a href="catalogo.html">← Voltar ao catálogo</a>
       </div>
     </div>
   </main>
+
+  <footer data-footer></footer>
+  <div data-bottom-nav></div>
+
+  <noscript>
+    <div class="container">
+      <p class="alert alert--error mt-6">
+        O KyriosStems depende de JavaScript para carregar o catálogo. Ative-o para ver a biblioteca.
+      </p>
+    </div>
+  </noscript>
 </body>
 </html>

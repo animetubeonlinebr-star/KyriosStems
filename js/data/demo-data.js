@@ -2,7 +2,7 @@
  * KyriosStems - js/data/demo-data.js
  * Biblioteca de demonstração.
  *
- * Usada quando o Firebase ainda não está configurado, para que a interface do
+ * Usada quando o Drive ainda não está configurado, para que a interface do
  * catálogo possa ser avaliada sem backend. Não representa sessões reais: os
  * pacotes não existem, portanto o download fica indisponível.
  */

@@ -16,20 +16,6 @@ export const COLLECTIONS = {
   sessions: 'sessions',
 };
 
-/**
- * Prefixo raiz no Firebase Storage.
- * sessions/{songId}/{sessionId}/package/session.zip
- */
-export const STORAGE_ROOT = 'sessions';
-
-/** Subpastas dentro de uma sessão no Storage. */
-export const STORAGE_FOLDERS = {
-  package: 'package',
-  project: 'project',
-  audio: 'audio',
-  aux: 'aux',
-};
-
 /** Nome canônico do pacote principal. */
 export const PACKAGE_FILE_NAME = 'session.zip';
 
@@ -147,9 +133,7 @@ export const FILE_CATEGORY_ORDER = ['package', 'project', 'audio', 'aux'];
 
 /** Rotas internas. */
 export const ROUTES = {
-  // O site abre em index.html, que hoje é a TELA TEMPORÁRIA de cadastro.
-  // Ao removê-la, o catálogo volta a ser index.html (veja o README).
-  catalog: 'catalogo.html',
+  catalog: 'index.html',
   song: 'song.html',
 };
 
@@ -159,10 +143,8 @@ export const QUERY = {
   sessionId: 'session',
 };
 
-/** Limites práticos de upload (o Firebase Storage tem limite configurável). */
+/** Limites práticos de download. */
 export const UPLOAD_LIMITS = {
-  maxFileBytes: 2 * 1024 * 1024 * 1024,
-  maxFiles: 200,
   /** Tamanho a partir do qual o download exige confirmação do usuário. */
   largePackageBytes: 512 * 1024 * 1024,
 };
@@ -175,12 +157,8 @@ export const UPLOAD_LIMITS = {
  * carregando indefinidamente.
  */
 export const NETWORK = {
-  /** Carregamento de dependências externas pelo CDN. */
-  sdkTimeoutMs: 12000,
   /** Consulta à API do Drive. */
   readTimeoutMs: 10000,
-  /** Verificação de conectividade com o Drive. */
-  authTimeoutMs: 8000,
 };
 
 /**
